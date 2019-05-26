@@ -1,0 +1,8 @@
+python-ldap
+falcon
+falcon-cors
+falcon-auth
+gunicorn
+dicttoxml
+gevent
+
