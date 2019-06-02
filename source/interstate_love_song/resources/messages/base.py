@@ -4,8 +4,8 @@ from xml.etree import ElementTree
 
 
 class BaseResponse(object):
-    def __init__(self, data):
-        self.data = data
+    def __init__(self, data, session):
+        self.data, self.session = (data, session)
 
     def serialize(self, parent):
         return parent
@@ -21,7 +21,7 @@ class BaseResponse(object):
 
         et.write(f, encoding="UTF-8", xml_declaration=True)
 
-        return f.getvalue()
+        return f.getvalue().decode("UTF-8")
 
 
 class HelloResponse(BaseResponse):
@@ -75,6 +75,13 @@ class HelloResponse(BaseResponse):
 
 class AuthenticateResponse(BaseResponse):
     def serialize(self, parent):
+
+        print("GET THE DATA", self.session, self.data)
+
+        self.session["user"], self.session["password"] = (
+            self.data["authenticate"]["username"],
+            self.data["authenticate"]["password"],
+        )
         response = ElementTree.SubElement(parent, "authenticate-resp", method="password")
 
         result = ElementTree.SubElement(response, "result")
@@ -134,16 +141,50 @@ class AllcateResourceResponse(BaseResponse):
 
         ElementTree.SubElement(result, "result-str").text = "Successfully allocated resource"
 
+        import requests
+
+        result = requests.post(
+            "https://jh-sys.example.com:60443/pcoip-agent/xml",
+            data="""
+            <?xml version='1.0' encoding='UTF-8'?>
+            <pcoip-agent version="1.0">
+              <launch-session>
+                <session-type>UNSPECIFIED</session-type>
+                <ip-address>172.16.43.3</ip-address>
+                <hostname>jh-sys.example.com</hostname>
+                <logon method="windows-password">
+                  <username>erhe</username>
+                  <password>xxx</password>
+                  <domain>example.com</domain>
+                </logon>
+                <client-mac>28:b2:bd:ed:a4:7c</client-mac>
+                <client-ip>10.27.0.5</client-ip>
+                <client-name>ford</client-name>
+                <license-path>2589@license-server-ip-address-or-host-name</license-path>
+                <session-log-id>d9836980-34c4-1fed-9dea-000000000000</session-log-id>
+              </launch-session>
+            </pcoip-agent>
+
+            """,
+            verify=False,
+        )
+
+        from interstate_love_song import util
+
+        data = util.elementtree_to_dict(ElementTree.fromstring(result.text))
+
+        session_info = data["launch-session-resp"].get("session-info")
+
         for resource in self.get_target():
             resource = ElementTree.SubElement(response, "target")
 
             for key, value in (
-                ("ip-address", "172.16.43.1"),
-                ("hostname", "jh-dev.example.com"),
-                ("sni", "jh-dev.example.com"),
-                ("port", "4172"),
-                ("session-id", "23423423423423"),
-                ("connect-tag", "asdf"),
+                ("ip-address", session_info.get("ip-address").get("_value")),
+                ("hostname", session_info.get("sni").get("_value")),
+                ("sni", session_info.get("sni").get("_value")),
+                ("port", session_info.get("port").get("_value")),
+                ("session-id", session_info.get("session-id").get("_value")),
+                ("connect-tag", session_info.get("session-tag").get("_value")),
             ):
                 ElementTree.SubElement(resource, key).text = value
 

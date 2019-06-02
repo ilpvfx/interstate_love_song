@@ -35,10 +35,10 @@ if __name__ == "__main__":
         API(),
         **{
             "loglevel": "debug",
-            "certfile": "/users/erhe/Downloads/73754438_potatis.example.com.cert",
-            "keyfile": "/users/erhe/Downloads/73754438_potatis.example.com.key",
-            "worker_class": "gevent",
-            "keepalive": 90,
+            "certfile": "/home/erhe/Downloads/84543927_ford.cert",
+            "keyfile": "/home/erhe/Downloads/84543927_ford.key",
+            "worker_class": "sync",
+            #'keepalive':90
         },
     ).run()
     pass

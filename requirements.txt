@@ -5,4 +5,7 @@ falcon-auth
 gunicorn
 dicttoxml
 gevent
-
+mitmproxy
+falcon_middleware_beaker
+pycrypto
+requests[security]

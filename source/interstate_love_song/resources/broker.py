@@ -28,15 +28,22 @@ class BrokerResource(BaseResource):
 
         return node
 
+    def get_session(self, req):
+        if "beaker.session" in req.env:
+            """We might not have a session since we 
+            can not get the pcoip client to store the cookie..?"""
+            return req.env["beaker.session"]
+
+        return {}
+
     def on_post(self, req, resp):
+
         if req.content_type and "text/xml" in req.content_type:
 
             if req.content_length is (None, 0):
                 return self._set_error(resp, falcon.HTTP_400, "POST body sent invalid XML")
 
             raw_input_data = req.stream.read()
-
-            print(raw_input_data)
 
             try:
                 data = self.elementtree_to_dict(
@@ -57,30 +64,24 @@ class BrokerResource(BaseResource):
 
         _version = data.pop("version")
 
-        result = None
+        _session = self.get_session(req)
 
         from interstate_love_song.resources.messages import base
 
+        response_cls = None
+
         for key in data:
             if key in ("hello",):
-                result = base.HelloResponse(data)._serialize()
-                pass
+                response_cls = base.HelloResponse
 
             elif key in ("authenticate",):
-                result = base.AuthenticateResponse(data)._serialize()
+                response_cls = base.AuthenticateResponse
 
             elif key in ("get-resource-list",):
-                result = base.GetResourceListResponse(data)._serialize()
+                response_cls = base.GetResourceListResponse
 
             elif key in ("allocate-resource",):
-                result = base.AllcateResourceResponse(data)._serialize()
+                response_cls = base.AllcateResourceResponse
 
-        if result:
-            resp.set_cookie(
-                "JSESSIONID", "aabbccddeeff00112233445566778899", secure=True,
-            )
-            resp.content_type = "application/xml; charset=UTF-8"
-
-            print(result)
-
-            resp.stream = result
+        if response_cls:
+            resp.stream = [response_cls(data, _session)._serialize().encode("UTF-8")]
