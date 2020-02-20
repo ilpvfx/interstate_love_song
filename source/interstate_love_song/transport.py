@@ -31,6 +31,7 @@ class HelloResponse(Message):
     authentication_methods: Sequence[str] = field(
         default_factory=lambda: ["AUTHENTICATE_VIA_PASSWORD"]
     )
+    domains: Sequence[str] = field(default_factory=lambda: ["example.com"])
 
 
 @dataclass
