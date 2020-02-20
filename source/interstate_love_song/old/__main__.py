@@ -35,8 +35,8 @@ if __name__ == "__main__":
         API(),
         **{
             "loglevel": "debug",
-            "certfile": "/home/erhe/Downloads/84543927_ford.cert",
-            "keyfile": "/home/erhe/Downloads/84543927_ford.key",
+            "certfile": "selfsign.crt",
+            "keyfile": "selfsign.key",
             "worker_class": "sync",
             #'keepalive':90
         },

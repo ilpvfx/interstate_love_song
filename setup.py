@@ -34,9 +34,6 @@ class PyTest(test):
         import shlex
         import pytest
 
-        if "MM_TEST_DB_URL" not in os.environ:
-            raise EnvironmentError('environment variable "MM_TEST_DB_URL" must be defined.')
-
         errno = pytest.main(shlex.split(self.pytest_args))
 
         sys.exit(errno)
@@ -45,12 +42,12 @@ class PyTest(test):
 setup(
     name=NAME,
     version=VERSION,
-    author="eric hermelin",
+    author="Eric Hermelin, Simon Otter",
     author_email="eric.hermelin@gmail.com",
     packages=find_packages(SOURCE_PATH),
     package_dir={"": "source"},
-    setup_requires=["pytest", "pytest-cov", "snapshottest",],
-    install_requires=["falcon-cors", "falcon", "falcon-auth", "kerberos",],
+    setup_requires=["pytest"],
+    install_requires=["falcon"],
     cmdclass={"test": PyTest},
     dependency_links=[],
     package_data={NAME: ["_static/*.js", "_static/*.css"]},

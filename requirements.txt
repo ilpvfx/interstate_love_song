@@ -1,10 +1,4 @@
-python-ldap
 falcon
-falcon-cors
-falcon-auth
 gunicorn
-dicttoxml
-gevent
 mitmproxy
-falcon_middleware_beaker
-requests[security]
+pytest

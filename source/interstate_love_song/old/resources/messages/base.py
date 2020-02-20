@@ -45,7 +45,7 @@ class HelloResponse(BaseResponse):
                 ("platform", "linux"),
                 ("locale", "en_US"),
                 ("ip-address", "CHANGE_ME"),
-                ("hostname", "potatis.example.com"),
+                ("hostname", "mymachine.example.com"),
             ):
 
                 ElementTree.SubElement(broker_element, key).text = value
@@ -144,22 +144,22 @@ class AllcateResourceResponse(BaseResponse):
         import requests
 
         result = requests.post(
-            "https://jh-sys.example.com:60443/pcoip-agent/xml",
+            "https://vmwr-test-01.example.com:60443/pcoip-agent/xml",
             data="""
             <?xml version='1.0' encoding='UTF-8'?>
             <pcoip-agent version="1.0">
               <launch-session>
                 <session-type>UNSPECIFIED</session-type>
-                <ip-address>172.16.43.3</ip-address>
-                <hostname>jh-sys.example.com</hostname>
+                <ip-address>172.18.32.93</ip-address>
+                <hostname>vmver-test01.example.com</hostname>
                 <logon method="windows-password">
-                  <username>erhe</username>
-                  <password>xxx</password>
+                  <username>siot</username>
+                  <password>xxxx</password>
                   <domain>example.com</domain>
                 </logon>
                 <client-mac>28:b2:bd:ed:a4:7c</client-mac>
-                <client-ip>10.27.0.5</client-ip>
-                <client-name>ford</client-name>
+                <client-ip>1.1.1.1</client-ip>
+                <client-name>ADOLF</client-name>
                 <license-path>2589@license-server-ip-address-or-host-name</license-path>
                 <session-log-id>d9836980-34c4-1fed-9dea-000000000000</session-log-id>
               </launch-session>
@@ -168,6 +168,9 @@ class AllcateResourceResponse(BaseResponse):
             """,
             verify=False,
         )
+
+        print(result.text)
+        print(result.status_code)
 
         from interstate_love_song import util
 
