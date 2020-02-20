@@ -1,3 +1,3 @@
-# inter_state_love_song
+# Interstate Love Song
 
-This is a proof of concept broker.
+A customizeable broker for Teradici systems.
