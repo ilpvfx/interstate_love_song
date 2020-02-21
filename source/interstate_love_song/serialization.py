@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Optional
 
 from .transport import *
 
@@ -26,6 +26,12 @@ def serialize_message(msg: Message) -> Element:
 
     if msg_type is HelloResponse:
         return _serialize_hello_response(msg)
+    elif msg_type is AuthenticateSuccessResponse:
+        return _serialize_authenticate_response(msg)
+    elif msg_type is GetResourceListResponse:
+        return _serialize_get_resource_list_response(msg)
+    elif msg_type is AllocateResourceSuccessResponse:
+        return _serialize_allocate_resource_success_response(msg)
     else:
         raise UnsupportedMessage()
 
@@ -59,3 +65,147 @@ def _serialize_hello_response(msg: HelloResponse) -> Element:
         SubElement(domains, "domain").text = domain
 
     return root
+
+
+def _serialize_authenticate_response(msg: AuthenticateSuccessResponse) -> Element:
+    root = _get_common_root()
+
+    resp = SubElement(root, "authenticate-resp", method="password")
+
+    result = SubElement(resp, "result")
+
+    SubElement(result, "result-id").text = "AUTH_SUCCESSFUL_AND_COMPLETE"
+    SubElement(result, "result-str").text = "Authentication was a resounding success."
+
+    return root
+
+
+def _serialize_get_resource_list_response(msg: GetResourceListResponse) -> Element:
+    root = _get_common_root()
+
+    resp = SubElement(root, "get-resource-list-resp")
+
+    result = SubElement(resp, "result")
+
+    SubElement(result, "result-id").text = "LIST_SUCCESSFUL"
+    SubElement(result, "result-str").text = "Khajit has wares."
+
+    for resource in msg.resources:
+        r = SubElement(resp, "resource")
+
+        SubElement(r, "resource-name").text = resource.resource_name
+        SubElement(r, "resource-id").text = resource.resource_id
+        SubElement(
+            r, "resource-type", {"session-type": resource.session_type}
+        ).text = resource.resource_type
+        SubElement(r, "resource-state").text = resource.resource_state
+
+        protocols = SubElement(r, "protocols")
+        SubElement(protocols, "protocol", {"is-default": "true"}).text = resource.protocol
+
+    return root
+
+
+def _serialize_allocate_resource_success_response(msg: AllocateResourceSuccessResponse) -> Element:
+    root = _get_common_root()
+
+    resp = SubElement(root, "allocate-resource-resp")
+
+    result = SubElement(resp, "result")
+
+    SubElement(result, "result-id").text = "ALLOC_SUCCESSFUL"
+    SubElement(result, "result-str").text = "The Spice must flow"
+
+    target = SubElement(resp, "target")
+
+    SubElement(target, "ip-address").text = msg.ip_address
+    SubElement(target, "hostname").text = msg.hostname
+    SubElement(target, "sni").text = msg.sni
+    SubElement(target, "port").text = str(msg.port)
+    SubElement(target, "session-id").text = msg.session_id
+    SubElement(target, "connect-tag").text = msg.connect_tag
+
+    SubElement(resp, "resource-id").text = str(msg.resource_id)
+    SubElement(resp, "protocol").text = msg.protocol
+
+    return root
+
+
+def deserialize_message(xml: Element) -> Message:
+    """Deserializes XML to a message. Only deserializes *Request messages.
+
+    :raises ValueError:
+        xml is not an instance of Element.
+    :returns: The final message. May return BadMessage indicating a message it doesn't understand.
+    """
+    if not isinstance(xml, Element):
+        raise ValueError("expected xml to be an ElementTree element.")
+
+    if xml.tag != "pcoip-client":
+        return BadMessage("root element must be pcoip-client.")
+
+    version = _get_version(xml)
+    if not version:
+        return BadMessage()
+
+    if len(xml) != 1:
+        return BadMessage("expected 1 and only 1 child to pcoip-client")
+    request = xml[0]
+
+    routing_table = {
+        "hello": _deserialize_hello,
+        "authenticate": _deserialize_authenticate,
+        "get-resource-list": _deserialize_message_get_resource_list,
+        "allocate-resource": _deserialize_message_allocate_resource,
+        "bye": _deserialize_bye,
+    }
+
+    if request.tag not in routing_table:
+        return BadMessage()
+
+    return routing_table[request.tag](request)
+
+
+def _get_version(root: Element) -> Optional[str]:
+    return root.get("version", None)
+
+
+def _deserialize_hello(request_xml: Element) -> Message:
+    client_info = request_xml.find("client-info")
+    if client_info is None:
+        return BadMessage("Could not find client-info")
+
+    hostname = client_info.find("hostname")
+    if hostname is None:
+        return BadMessage("Could not find client-info/hostname")
+
+    return HelloRequest(hostname.text)
+
+
+def _deserialize_authenticate(request_xml: Element) -> Message:
+    username = request_xml.find("username")
+    password = request_xml.find("password")
+
+    if username is None or password is None:
+        return BadMessage("Missing either username or password element.")
+
+    return AuthenticateRequest(username.text, password.text)
+
+
+def _deserialize_message_get_resource_list(request_xml: Element) -> Message:
+    return GetResourceListRequest()
+
+
+def _deserialize_message_allocate_resource(request_xml: Element) -> Message:
+    resource_id = request_xml.find("resource-id")
+    if resource_id is None:
+        return BadMessage("No resource-id element.")
+
+    try:
+        return AllocateResourceRequest(int(resource_id.text))
+    except ValueError:
+        return BadMessage("resource-id was not an integer.")
+
+
+def _deserialize_bye(request_xml: Element) -> Message:
+    return ByeRequest()

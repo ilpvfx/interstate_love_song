@@ -12,7 +12,8 @@ class Message:
 class HelloRequest(Message):
     """Represents the Hello message set by PCOIP-client to the broker."""
 
-    pass
+    # Hostname of the client connecting (self-reported)
+    client_hostname: str
 
 
 @dataclass
@@ -90,7 +91,7 @@ class AllocateResourceRequest(Message):
     """The PCOIP-client has chosen a resource and asks the broker to allocate it for us. The broker must then ask the
     resource for a session id, and answer with it."""
 
-    pass
+    resource_id: int
 
 
 @dataclass
@@ -104,15 +105,25 @@ class AllocateResourceSuccessResponse(Message):
     port: int
     session_id: str
     connect_tag: str
-    resource_id: str = "DOESNT MATTER"
+    resource_id: int
     protocol: str = "PCOIP"
+
+
+@dataclass
+class ByeRequest(Message):
+    pass
+
+
+@dataclass
+class ByeResponse(Message):
+    pass
 
 
 @dataclass
 class BadMessage(Message):
     """Signifies a message that couldn't be decoded or was improper somehow."""
 
-    pass
+    reason: str = "Unspecified"
 
 
 class MessageEncodingError(Exception):
