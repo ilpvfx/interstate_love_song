@@ -35,7 +35,7 @@ def test_broker_protocol_handler_call_invalid_message(ctx: Fixture):
 def test_broker_protocol_handler_call_waiting_for_hello_hello(ctx: Fixture):
     bph = BrokerProtocolHandler(current_state=ProtocolState.WAITING_FOR_HELLO)
 
-    new_state, session_data, response = bph(HelloRequest(), None)
+    new_state, session_data, response = bph(HelloRequest(client_hostname="Lagrange"), None)
     assert new_state == ProtocolState.WAITING_FOR_AUTHENTICATE
 
     assert isinstance(response, HelloResponse)
@@ -78,7 +78,9 @@ def test_broker_protocol_handler_call_waiting_for_authenticate_authenticate(ctx:
 
 def test_broker_protocol_handler_call_waiting_for_authenticate_other_message(ctx: Fixture):
     bph = BrokerProtocolHandler(current_state=ProtocolState.WAITING_FOR_AUTHENTICATE)
-    new_state, session_data, response = bph(HelloRequest(), BrokerSessionData())
+    new_state, session_data, response = bph(
+        HelloRequest(client_hostname="Euler"), BrokerSessionData()
+    )
     assert new_state == ProtocolState.TERMINATE
 
     assert response is None
@@ -107,7 +109,7 @@ def test_broker_protocol_handler_call_waiting_for_allocateresource_allocateresou
     bph = BrokerProtocolHandler(current_state=ProtocolState.WAITING_FOR_ALLOCATERESOURCE)
 
     new_state, session_data, response = bph(
-        AllocateResourceRequest(), BrokerSessionData("Leonhard", "Euler")
+        AllocateResourceRequest(resource_id=1), BrokerSessionData("Leonhard", "Euler")
     )
 
     assert new_state == ProtocolState.TERMINATE

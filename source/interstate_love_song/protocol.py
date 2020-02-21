@@ -123,5 +123,6 @@ class BrokerProtocolHandler:
                 port=666,
                 session_id="NO BUENO",
                 connect_tag="NO BUENO",
+                resource_id=1,
             ),
         )

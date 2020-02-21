@@ -2,3 +2,5 @@ falcon
 gunicorn
 mitmproxy
 pytest
+defusedxml
+xmldiff
