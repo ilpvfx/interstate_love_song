@@ -5,9 +5,3 @@ from typing import Optional
 
 class SessionError(Exception):
     pass
-
-
-@dataclass
-class BrokerSessionData:
-    username: Optional[str] = None
-    password: Optional[str] = None

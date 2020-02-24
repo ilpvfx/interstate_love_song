@@ -4,3 +4,4 @@ mitmproxy
 pytest
 defusedxml
 xmldiff
+beaker

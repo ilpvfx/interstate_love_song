@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Sequence
+from typing import Sequence, Callable, Any
+
+
 from ._version import __version__
 
 
