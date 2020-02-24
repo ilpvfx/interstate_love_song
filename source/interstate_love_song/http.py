@@ -92,7 +92,7 @@ class BrokerResource:
         self._deserialize = deserialize
         self._session_setter_creator = session_setter_creator
 
-    def on_get(self, req, resp):
+    def on_post(self, req, resp):
         """Receives an XML payload, decodes it and runs it through the protocol. This endpoint is stateful."""
         protocol = self._protocol_creator()
 

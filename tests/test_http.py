@@ -32,16 +32,16 @@ class DummySessionSetter(SessionSetter):
         return self.data
 
 
-def test_broker_resource_on_get_bad_xml():
+def test_broker_resource_on_post_bad_xml():
     api = get_falcon_api(BrokerResource())
     client = TestClient(api)
 
-    resp = client.simulate_get("/pcoip-broker/xml", body="Not XML")
+    resp = client.simulate_post("/pcoip-broker/xml", body="Not XML")
 
     assert resp.status == falcon.HTTP_BAD_REQUEST
 
 
-def test_broker_resource_on_get_sets_session():
+def test_broker_resource_on_post_sets_session():
     def dummy_protocol(msg, data):
         return (
             ProtocolSession("leonhard", "euler", state=ProtocolState.WAITING_FOR_HELLO),
@@ -57,14 +57,14 @@ def test_broker_resource_on_get_sets_session():
     )
     client = TestClient(api)
 
-    resp = client.simulate_get("/pcoip-broker/xml", body="<hello/>")
+    resp = client.simulate_post("/pcoip-broker/xml", body="<hello/>")
 
     assert session_setter.data is not None
     assert session_setter.data.username == "leonhard"
     assert session_setter.data.password == "euler"
 
 
-def test_broker_resource_on_get_clears_session():
+def test_broker_resource_on_post_clears_session():
     def terminate_protocol(msg, data):
         return None, HelloResponse("lagrange")
 
@@ -78,7 +78,7 @@ def test_broker_resource_on_get_clears_session():
     )
     client = TestClient(api)
 
-    resp = client.simulate_get("/pcoip-broker/xml", body="<hello/>")
+    resp = client.simulate_post("/pcoip-broker/xml", body="<hello/>")
 
     assert session_setter.data is None
 
@@ -107,7 +107,7 @@ def test_broker_resource_deserializes():
     )
     client = TestClient(api)
 
-    resp = client.simulate_get("/pcoip-broker/xml", body="<hello/>")
+    resp = client.simulate_post("/pcoip-broker/xml", body="<hello/>")
 
     assert check.deserialize_called is True
 
@@ -143,7 +143,7 @@ def test_broker_resource_serializes():
     )
     client = TestClient(api)
 
-    resp = client.simulate_get("/pcoip-broker/xml", body="<hello/>")
+    resp = client.simulate_post("/pcoip-broker/xml", body="<hello/>")
 
     assert resp.text == tostring(xml, encoding="unicode")
 
