@@ -1,8 +1,7 @@
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Sequence, Any, Tuple, Optional
+from typing import Sequence, Any, Tuple, Optional, Callable
 
-from interstate_love_song.session import BrokerSessionData
 from interstate_love_song.transport import (
     Message,
     HelloRequest,
@@ -24,13 +23,20 @@ class ProtocolState(Enum):
     WAITING_FOR_AUTHENTICATE = 1
     WAITING_FOR_GETRESOURCELIST = 2
     WAITING_FOR_ALLOCATERESOURCE = 3
-    TERMINATE = 100
 
 
-ProtocolAction = Tuple[ProtocolState, Optional[BrokerSessionData], Optional[Message]]
+@dataclass
+class ProtocolSession:
+    username: Optional[str] = None
+    password: Optional[str] = None
+    state: ProtocolState = ProtocolState.WAITING_FOR_HELLO
 
 
-def _assert_session_exist(s: Optional[BrokerSessionData]):
+ProtocolAction = Tuple[Optional[ProtocolSession], Optional[Message]]
+ProtocolHandler = Callable[[Message, Optional[ProtocolSession]], ProtocolAction]
+
+
+def _assert_session_exist(s: Optional[ProtocolSession]):
     if s is None:
         raise ValueError("session was expected to be non-None. This is a bug.")
 
@@ -39,30 +45,23 @@ class BrokerProtocolHandler:
     """Implements the logical level of the broker protocol. It is implemented as a state machine where state
     transitions happen based on the values of the message and the broker session."""
 
-    def __init__(self, current_state: ProtocolState = ProtocolState.WAITING_FOR_HELLO):
-        """Initialize the handler in the given state.
+    def __init__(self):
+        pass
 
-        :raises ValueError:
-            current_state is not a ProtocolState. transport is not of type BrokerTransport.
-        """
-        if not isinstance(current_state, ProtocolState):
-            raise ValueError("current_state must be a ProtocolState enum member.")
-        self._state = current_state
-
-    def __call__(self, msg: Message, session: Optional[BrokerSessionData]) -> ProtocolAction:
+    def __call__(self, msg: Message, session: Optional[ProtocolSession]) -> ProtocolAction:
         """Handles the message and returns the new state, session data and the response.
 
         :param msg:
             The message to handle.
         :param session:
             A slot that allows the protocol handler to register and read the session.
-        :rtype: ProtocolState
-        :return: A new state, an optional session data and a response message. If a session is active but this returns
+
+        :return: An optional session data and a response message. If a session is active but this returns
             None as the current session data, the session should be removed from store.
         """
         if not isinstance(msg, Message):
             raise ValueError("msg must inherit from Message.")
-        if session is not None and not isinstance(session, BrokerSessionData):
+        if session is not None and not isinstance(session, ProtocolSession):
             raise ValueError("session must be either None or BrokerSessionData.")
 
         msg_type = type(msg)
@@ -80,41 +79,46 @@ class BrokerProtocolHandler:
             ),
         }
 
-        assert self._state in routing_table  # check that we have implemented this state.
-        accepted_msg, handler = routing_table[self._state]
+        state = ProtocolState.WAITING_FOR_HELLO if session is None else session.state
+
+        assert state in routing_table  # check that we have implemented this state.
+        accepted_msg, handler = routing_table[state]
 
         if msg_type is accepted_msg:
             return handler(msg, session)
         else:
-            return ProtocolState.TERMINATE, None, None
+            return None, None
 
-    def _hello(self, msg: HelloRequest, session: Optional[BrokerSessionData]) -> ProtocolAction:
+    def _hello(self, msg: HelloRequest, session: Optional[ProtocolSession]) -> ProtocolAction:
         hostname = socket.gethostname()
-        return ProtocolState.WAITING_FOR_AUTHENTICATE, BrokerSessionData(), HelloResponse(hostname)
+        return (
+            ProtocolSession(state=ProtocolState.WAITING_FOR_AUTHENTICATE),
+            HelloResponse(hostname),
+        )
 
     def _authenticate(
-        self, msg: AuthenticateRequest, session: Optional[BrokerSessionData]
+        self, msg: AuthenticateRequest, session: Optional[ProtocolSession]
     ) -> ProtocolAction:
         _assert_session_exist(session)
         # TODO: Do better auth here.
         session.username = msg.username
         session.password = msg.password
-        return ProtocolState.WAITING_FOR_GETRESOURCELIST, session, AuthenticateSuccessResponse()
+        session.state = ProtocolState.WAITING_FOR_GETRESOURCELIST
+        return session, AuthenticateSuccessResponse()
 
     def _get_resource_list(
-        self, msg: GetResourceListRequest, session: Optional[BrokerSessionData]
+        self, msg: GetResourceListRequest, session: Optional[ProtocolSession]
     ) -> ProtocolAction:
         _assert_session_exist(session)
-
-        return ProtocolState.WAITING_FOR_ALLOCATERESOURCE, session, GetResourceListResponse([])
+        session.state = ProtocolState.WAITING_FOR_ALLOCATERESOURCE
+        return session, GetResourceListResponse([])
 
     def _allocate_resource(
-        self, msg: AllocateResourceRequest, session: Optional[BrokerSessionData]
+        self, msg: AllocateResourceRequest, session: Optional[ProtocolSession]
     ) -> ProtocolAction:
         _assert_session_exist(session)
 
         return (
-            ProtocolState.TERMINATE,
             None,
             AllocateResourceSuccessResponse(
                 ip_address="NO BUENO",
