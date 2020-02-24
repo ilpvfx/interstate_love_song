@@ -79,6 +79,27 @@ def test_serialize_message_authenticate_success_response():
     assert xml_tree_equal_to_xml_string(xml_et, expected)
 
 
+def test_serialize_message_authenticate_failed_response():
+    msg = AuthenticateFailedResponse()
+
+    expected = """<?xml version="1.0"?>
+    <pcoip-client version="2.1">
+        <authenticate-resp method="password">
+            <result>
+                <result-id>AUTH_FAILED_UNKNOWN_USERNAME_OR_PASSWORD</result-id>
+                <result-str>Could not authenticate.</result-str>
+            </result>
+        </authenticate-resp>
+    </pcoip-client>
+    """.format(
+        msg=msg
+    )
+
+    xml_et = serialize_message(msg)
+
+    assert xml_tree_equal_to_xml_string(xml_et, expected)
+
+
 def test_serialize_message_get_resource_list_response():
     resource = TeradiciResource("Euler", "Lagrange")
     msg = GetResourceListResponse([resource])

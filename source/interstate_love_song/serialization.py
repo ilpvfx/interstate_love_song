@@ -28,6 +28,8 @@ def serialize_message(msg: Message) -> Element:
         return _serialize_hello_response(msg)
     elif msg_type is AuthenticateSuccessResponse:
         return _serialize_authenticate_response(msg)
+    elif msg_type is AuthenticateFailedResponse:
+        return _serialize_authenticate_failed_response(msg)
     elif msg_type is GetResourceListResponse:
         return _serialize_get_resource_list_response(msg)
     elif msg_type is AllocateResourceSuccessResponse:
@@ -76,6 +78,19 @@ def _serialize_authenticate_response(msg: AuthenticateSuccessResponse) -> Elemen
 
     SubElement(result, "result-id").text = "AUTH_SUCCESSFUL_AND_COMPLETE"
     SubElement(result, "result-str").text = "Authentication was a resounding success."
+
+    return root
+
+
+def _serialize_authenticate_failed_response(msg: AuthenticateFailedResponse) -> Element:
+    root = _get_common_root()
+
+    resp = SubElement(root, "authenticate-resp", method="password")
+
+    result = SubElement(resp, "result")
+
+    SubElement(result, "result-id").text = "AUTH_FAILED_UNKNOWN_USERNAME_OR_PASSWORD"
+    SubElement(result, "result-str").text = "Could not authenticate."
 
     return root
 
