@@ -131,7 +131,15 @@ class BrokerResource:
 
 
 def get_falcon_api(broker_resource: BrokerResource) -> API:
-    beaker_middleware = BeakerSessionMiddleware()
+    beaker_middleware = BeakerSessionMiddleware(
+        {
+            "session.type": "memory",
+            "session.cookie_expires": True,
+            "session.auto": True,
+            "session.key": "JSESSIONID",
+            "session.secure": True,
+        }
+    )
 
     api = API(middleware=beaker_middleware)
     api.add_route("/pcoip-broker/xml", resource=broker_resource)
