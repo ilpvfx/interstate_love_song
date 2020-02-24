@@ -117,4 +117,14 @@ def test_broker_protocol_handler_call_waiting_for_allocateresource_allocateresou
     assert response.connect_tag == "NO BUENO"
     assert response.protocol == "PCOIP"
 
+    assert session_data is not None
+    assert session_data.state == ProtocolState.WAITING_FOR_BYE
+
+
+def test_broker_protocol_handler_call_waiting_for_bye_bye(ctx: Fixture):
+    bph = BrokerProtocolHandler()
+
+    session_data, response = bph(ByeRequest(), ProtocolSession(state=ProtocolState.WAITING_FOR_BYE))
+
     assert session_data is None
+    assert isinstance(response, ByeResponse)

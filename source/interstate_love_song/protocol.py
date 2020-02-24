@@ -12,6 +12,8 @@ from interstate_love_song.transport import (
     AllocateResourceRequest,
     GetResourceListResponse,
     AllocateResourceSuccessResponse,
+    ByeRequest,
+    ByeResponse,
 )
 from interstate_love_song._version import __version__
 
@@ -23,6 +25,7 @@ class ProtocolState(Enum):
     WAITING_FOR_AUTHENTICATE = 1
     WAITING_FOR_GETRESOURCELIST = 2
     WAITING_FOR_ALLOCATERESOURCE = 3
+    WAITING_FOR_BYE = 4
 
 
 @dataclass
@@ -77,6 +80,7 @@ class BrokerProtocolHandler:
                 AllocateResourceRequest,
                 self._allocate_resource,
             ),
+            ProtocolState.WAITING_FOR_BYE: (ByeRequest, self._bye),
         }
 
         state = ProtocolState.WAITING_FOR_HELLO if session is None else session.state
@@ -118,8 +122,9 @@ class BrokerProtocolHandler:
     ) -> ProtocolAction:
         _assert_session_exist(session)
 
+        session.state = ProtocolState.WAITING_FOR_BYE
         return (
-            None,
+            session,
             AllocateResourceSuccessResponse(
                 ip_address="NO BUENO",
                 hostname="NO BUENO",
@@ -130,3 +135,6 @@ class BrokerProtocolHandler:
                 resource_id=1,
             ),
         )
+
+    def _bye(self, msg: ByeRequest, session: Optional[ProtocolSession]) -> ProtocolAction:
+        return None, ByeResponse()
