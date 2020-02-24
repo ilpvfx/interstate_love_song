@@ -66,7 +66,7 @@ class BrokerResource(BaseResource):
 
         _session = self.get_session(req)
 
-        from interstate_love_song.resources.messages import base
+        from .messages import base
 
         response_cls = None
 

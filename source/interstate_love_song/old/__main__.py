@@ -2,7 +2,7 @@ import logging
 
 from gunicorn.app.base import BaseApplication
 
-from interstate_love_song._api import API
+from ._api import API
 
 logger = logging.getLogger(__name__)
 
