@@ -65,7 +65,7 @@ class BrokerProtocolHandler:
         if not isinstance(msg, Message):
             raise ValueError("msg must inherit from Message.")
         if session is not None and not isinstance(session, ProtocolSession):
-            raise ValueError("session must be either None or BrokerSessionData.")
+            raise ValueError("session must be either None or ProtocolSession.")
 
         msg_type = type(msg)
 

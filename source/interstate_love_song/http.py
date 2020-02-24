@@ -1,7 +1,10 @@
+import logging
 from abc import ABC, abstractmethod
+from io import BytesIO
+
 from pyexpat import ExpatError
 from typing import Callable, Any, Optional
-from xml.etree.ElementTree import ParseError, tostring
+from xml.etree.ElementTree import ParseError, tostring, ElementTree
 
 import falcon
 from defusedxml.ElementTree import fromstring
@@ -17,6 +20,8 @@ from .protocol import (
 from .serialization import serialize_message, deserialize_message, HelloRequest
 
 ProtocolCreator = Callable[[], ProtocolHandler]
+
+logger = logging.getLogger(__name__)
 
 
 def standard_protocol_creator():
@@ -47,10 +52,12 @@ class BeakerSessionSetter(SessionSetter):
         self._request = request
 
     def set_data(self, data: Optional[ProtocolSession]):
-        self._request.env["beaker.session"] = data
+        self._request.env["beaker.session"]["protocol"] = data
 
     def get_data(self):
-        return self._request.env["beaker.session"]
+        if "protocol" not in self._request.env["beaker.session"]:
+            return None
+        return self._request.env["beaker.session"]["protocol"]
 
 
 SessionSetterCreator = Callable[[Any], SessionSetter]
@@ -103,10 +110,22 @@ class BrokerResource:
 
             in_msg = self._deserialize(xml)
 
+            logger.info("Received POST: Message: %s.", str(in_msg))
+
             new_session_data, out_msg = protocol(in_msg, session_setter.get_data())
             session_setter.set_data(new_session_data)
 
-            resp.body = tostring(self._serialize(out_msg), encoding="unicode")
+            f = BytesIO()
+            ElementTree(self._serialize(out_msg)).write(f, encoding="utf-8", xml_declaration=True)
+
+            # WE MUST RETURN A CHUNKED STREAM, OR TERADICI WILL BE VERY UNHAPPY.
+            # DON'T JUST CHANGE THIS TO resp.body = blabla, AS OF 2020, IT MUST BE A CHUNKED STREAM.
+            # I REPEAT. IT MUST BE A CHUNKED STREAM.
+            resp.stream = [f.getvalue()]
+
+            resp.content_type = "text/xml"
+
+            logger.info("Responded with %s.", str(out_msg))
         except SyntaxError as e:
             raise falcon.HTTPBadRequest(description="Malformed XML.")
 
