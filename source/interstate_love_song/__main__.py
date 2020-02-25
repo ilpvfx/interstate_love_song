@@ -38,6 +38,7 @@ def gunicorn_runner(wsgi, host, port):
 
 
 def werkzeug_runner(wsgi, host, port):
+    """Doesn't seem to send chunked responses properly, and so won't work with PCOIP-clients it seems."""
     from werkzeug.serving import run_simple
 
     run_simple(host, port, wsgi, ssl_context=("selfsign.crt", "selfsign.key"))
