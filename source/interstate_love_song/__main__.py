@@ -44,11 +44,26 @@ def werkzeug_runner(wsgi, host, port):
     run_simple(host, port, wsgi, ssl_context=("selfsign.crt", "selfsign.key"))
 
 
+def cherrypy_runner(wsgi, host, port):
+    import cherrypy
+    from cherrypy import tree
+
+    tree.graft(wsgi, "/")
+
+    cherrypy.server.ssl_certificate = "selfsign.crt"
+    cherrypy.server.ssl_private_key = "selfsign.key"
+
+    cherrypy.engine.start()
+    cherrypy.engine.block()
+
+
 if __name__ == "__main__":
     logging.basicConfig()
 
     argparser = argparse.ArgumentParser("interstate_love_song")
-    argparser.add_argument("-s", "--server", choices=["werkzeug", "gunicorn"], default="gunicorn")
+    argparser.add_argument(
+        "-s", "--server", choices=["werkzeug", "gunicorn", "cherrypy"], default="gunicorn"
+    )
     argparser.add_argument("--host", default="localhost")
     argparser.add_argument("-p", "--port", default=60444, type=int)
 
@@ -60,3 +75,5 @@ if __name__ == "__main__":
         werkzeug_runner(wsgi, args.host, args.port)
     elif args.server == "gunicorn":
         gunicorn_runner(wsgi, args.host, args.port)
+    elif args.server == "cherrypy":
+        cherrypy_runner(wsgi, args.host, args.port)
