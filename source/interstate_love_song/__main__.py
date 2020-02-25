@@ -52,24 +52,27 @@ def cherrypy_runner(wsgi, host, port):
 
     cherrypy.server.ssl_certificate = "selfsign.crt"
     cherrypy.server.ssl_private_key = "selfsign.key"
+    cherrypy.server.bind_addr = (host, port)
 
     cherrypy.engine.start()
     cherrypy.engine.block()
 
 
 if __name__ == "__main__":
-    logging.basicConfig()
+    logging.basicConfig(level="INFO")
 
     argparser = argparse.ArgumentParser("interstate_love_song")
     argparser.add_argument(
         "-s", "--server", choices=["werkzeug", "gunicorn", "cherrypy"], default="gunicorn"
     )
     argparser.add_argument("--host", default="localhost")
-    argparser.add_argument("-p", "--port", default=60444, type=int)
+    argparser.add_argument("-p", "--port", default=60443, type=int)
 
     args = argparser.parse_args()
 
     wsgi = get_falcon_api(BrokerResource())
+
+    twisted_runner(wsgi, args.host, args.port)
 
     if args.server == "werkzeug":
         werkzeug_runner(wsgi, args.host, args.port)

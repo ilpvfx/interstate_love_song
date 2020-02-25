@@ -22,6 +22,7 @@ from .serialization import serialize_message, deserialize_message, HelloRequest
 ProtocolCreator = Callable[[], ProtocolHandler]
 
 logger = logging.getLogger(__name__)
+logger.setLevel("INFO")
 
 
 def standard_protocol_creator():
@@ -104,9 +105,12 @@ class BrokerResource:
         protocol = self._protocol_creator()
 
         session_setter = self._session_setter_creator(req)
+        print(req.cookies)
 
         try:
-            xml = fromstring(req.bounded_stream.read())
+            xml_str = req.bounded_stream.read()
+            logger.info("Got XML: %s", str(xml_str))
+            xml = fromstring(xml_str)
 
             in_msg = self._deserialize(xml)
 
@@ -123,7 +127,7 @@ class BrokerResource:
             # I REPEAT. IT MUST BE A CHUNKED STREAM.
             resp.stream = [f.getvalue()]
 
-            resp.content_type = "text/xml"
+            resp.content_type = falcon.MEDIA_XML
 
             logger.info("Responded with %s.", str(out_msg))
         except SyntaxError as e:
@@ -133,11 +137,13 @@ class BrokerResource:
 def get_falcon_api(broker_resource: BrokerResource) -> API:
     beaker_middleware = BeakerSessionMiddleware(
         {
-            "session.type": "memory",
+            "session.type": "file",
             "session.cookie_expires": True,
-            "session.auto": True,
+            "session.auto": True,  # We got to have this on as things are currently programmed.
             "session.key": "JSESSIONID",
             "session.secure": True,
+            "session.httponly": True,
+            "session.data_dir": "C:\\",
         }
     )
 

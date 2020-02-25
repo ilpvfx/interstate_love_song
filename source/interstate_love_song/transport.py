@@ -16,6 +16,7 @@ class HelloRequest(Message):
 
     # Hostname of the client connecting (self-reported)
     client_hostname: str
+    client_product_name: str
 
 
 @dataclass

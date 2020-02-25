@@ -84,7 +84,7 @@ def test_broker_resource_on_post_clears_session():
 
 
 def test_broker_resource_deserializes():
-    msg = HelloRequest("euler.lagrange.edu")
+    msg = HelloRequest("euler.lagrange.edu", "Abel")
 
     def terminate_protocol(in_msg, data):
         assert in_msg is msg
@@ -113,7 +113,7 @@ def test_broker_resource_deserializes():
 
 
 def test_broker_resource_serializes():
-    in_msg = HelloRequest("euler.lagrange.edu")
+    in_msg = HelloRequest("euler.lagrange.edu", "Abel")
     out_msg = HelloResponse("lagrange")
 
     def terminate_protocol(ignored, data):
@@ -145,6 +145,6 @@ def test_broker_resource_serializes():
 
     resp = client.simulate_post("/pcoip-broker/xml", body="<hello/>")
 
-    assert resp.text == tostring(xml, encoding="unicode")
+    assert resp.text == "<?xml version='1.0' encoding='utf-8'?>\n<bogus />"
 
     assert check.serialize_called is True

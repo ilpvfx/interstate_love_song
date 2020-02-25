@@ -194,7 +194,11 @@ def _deserialize_hello(request_xml: Element) -> Message:
     if hostname is None:
         return BadMessage("Could not find client-info/hostname")
 
-    return HelloRequest(hostname.text)
+    product_name = client_info.find("product-name")
+    if product_name is None:
+        return BadMessage("Could not find client-info/product-name")
+
+    return HelloRequest(hostname.text, product_name.text)
 
 
 def _deserialize_authenticate(request_xml: Element) -> Message:

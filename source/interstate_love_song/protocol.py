@@ -1,3 +1,4 @@
+import logging
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Sequence, Any, Tuple, Optional, Callable
@@ -14,8 +15,11 @@ from interstate_love_song.transport import (
     AllocateResourceSuccessResponse,
     ByeRequest,
     ByeResponse,
+    TeradiciResource,
 )
 from interstate_love_song._version import __version__
+
+logger = logging.getLogger(__name__)
 
 import socket
 
@@ -91,14 +95,23 @@ class BrokerProtocolHandler:
         if msg_type is accepted_msg:
             return handler(msg, session)
         else:
+            logger.info(
+                "Got an unexpected message (%s) for this state (%s), expected %s",
+                str(msg_type),
+                str(state),
+                str(accepted_msg),
+            )
             return None, None
 
     def _hello(self, msg: HelloRequest, session: Optional[ProtocolSession]) -> ProtocolAction:
         hostname = socket.gethostname()
-        return (
-            ProtocolSession(state=ProtocolState.WAITING_FOR_AUTHENTICATE),
-            HelloResponse(hostname),
-        )
+        response = HelloResponse(hostname)
+        # The PCOIP-client sends a hello with this as the product name to check if we are connecting to a broker
+        # or to a machine. We want to stay in the WAITING_FOR_HELLO state in those cases.
+        if msg.client_product_name == "QueryBrokerClient":
+            return None, response
+        else:
+            return ProtocolSession(state=ProtocolState.WAITING_FOR_AUTHENTICATE), response
 
     def _authenticate(
         self, msg: AuthenticateRequest, session: Optional[ProtocolSession]
@@ -115,7 +128,12 @@ class BrokerProtocolHandler:
     ) -> ProtocolAction:
         _assert_session_exist(session)
         session.state = ProtocolState.WAITING_FOR_ALLOCATERESOURCE
-        return session, GetResourceListResponse([])
+        return (
+            session,
+            GetResourceListResponse(
+                [TeradiciResource("Ernst Hugo Järegård", "1"), TeradiciResource("Gösta Ekman", "2")]
+            ),
+        )
 
     def _allocate_resource(
         self, msg: AllocateResourceRequest, session: Optional[ProtocolSession]

@@ -222,6 +222,7 @@ def test_deserialize_message_hello():
 
     assert isinstance(msg, HelloRequest)
     assert msg.client_hostname == "euler.leonhard.gov"
+    assert msg.client_product_name == "Teradici PCoIP Desktop Client"
 
 
 def test_deserialize_message_authenticate():

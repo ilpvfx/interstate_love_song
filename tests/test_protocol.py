@@ -27,7 +27,9 @@ def test_broker_protocol_handler_call_invalid_message(ctx: Fixture):
 def test_broker_protocol_handler_call_waiting_for_hello_hello(ctx: Fixture):
     bph = BrokerProtocolHandler()
 
-    session_data, response = bph(HelloRequest(client_hostname="Lagrange"), None)
+    session_data, response = bph(
+        HelloRequest(client_hostname="Lagrange", client_product_name="Abel"), None
+    )
     assert session_data.state == ProtocolState.WAITING_FOR_AUTHENTICATE
 
     assert isinstance(response, HelloResponse)
@@ -37,6 +39,20 @@ def test_broker_protocol_handler_call_waiting_for_hello_hello(ctx: Fixture):
     assert isinstance(session_data, ProtocolSession)
     assert session_data.username is None
     assert session_data.password is None
+
+
+def test_broker_protocol_handler_call_waiting_for_hello_hello_query_broker_client(ctx: Fixture):
+    bph = BrokerProtocolHandler()
+
+    session_data, response = bph(
+        HelloRequest(client_hostname="Lagrange", client_product_name="QueryBrokerClient"), None
+    )
+
+    assert isinstance(response, HelloResponse)
+    assert response.hostname == socket.gethostname()
+    assert "AUTHENTICATE_VIA_PASSWORD" in response.authentication_methods
+
+    assert session_data is None
 
 
 def test_broker_protocol_handler_call_waiting_for_hello_other_message(ctx: Fixture):
@@ -72,7 +88,7 @@ def test_broker_protocol_handler_call_waiting_for_authenticate_authenticate(ctx:
 def test_broker_protocol_handler_call_waiting_for_authenticate_other_message(ctx: Fixture):
     bph = BrokerProtocolHandler()
     session_data, response = bph(
-        HelloRequest(client_hostname="Euler"),
+        HelloRequest(client_hostname="Euler", client_product_name="Abel"),
         ProtocolSession(state=ProtocolState.WAITING_FOR_AUTHENTICATE),
     )
 
