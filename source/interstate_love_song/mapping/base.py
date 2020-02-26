@@ -32,7 +32,7 @@ class Mapper(ABC):
         pass
 
     @abstractmethod
-    def map(self, credentials: Credentials, previous_host: Optional[str]) -> MapperResult:
+    def map(self, credentials: Credentials, previous_host: Optional[str] = None) -> MapperResult:
         """Maps the user credentials to a set of hosts.
 
         :param credentials: The username and password.
