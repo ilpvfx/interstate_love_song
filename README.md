@@ -27,7 +27,8 @@ wasteful.
 
 
 ### Chosing a server
-CherryPy runner is a good choice for development on windows. Werkzeug seems to not work well at all. 
+CherryPy runner is a good choice for development on windows. Werkzeug seems to not work well at all. When using CherryPy,
+`--fallback_sessions` is recommended. 
 
 The Teradici PCOIP client is very picky and particular. The server must use chunked encoding (they claim it supports 
 regular HTTP transmission, but it doesn't.) 

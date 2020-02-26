@@ -31,6 +31,7 @@ class Mapper(ABC):
     def __init__(self):
         pass
 
+    @abstractmethod
     def map(self, credentials: Credentials, previous_host: Optional[str]) -> MapperResult:
         """Maps the user credentials to a set of hosts.
 
