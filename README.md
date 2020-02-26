@@ -13,7 +13,6 @@ python -m interstate_love_song -s [server]
 The arguments are:
 
 - -s, --server: can be `gunicorn`, `cherrypy` or `werkzeug`. `gunicorn` is recommended, and default. 
-Setting this overrides the settings JSON.
 
 - -p, --port: default is 60443, setting this overrides the settings JSON.
 
@@ -21,6 +20,10 @@ Setting this overrides the settings JSON.
 we suspect this is when the connection is not kept alive. In those situations we can track the session using the 
 `CLIENT-LOG-ID` header instead. Note that you should, if you can, get cookies running since that's more stable and less 
 wasteful.
+
+- --config: configuration file.
+- --cert: SSL certificate file
+- --key: SSL key file
 
 
 ### Chosing a server
@@ -33,7 +36,10 @@ The server should preferably support `Connection: Keep-Alive`, or cookies might 
 
 ## Settings
 
-TBD
+Generate a default config with:
+```shell script
+python -m interstate_love_song.settings > ../settings.json
+```
 
 ## Requirements
 

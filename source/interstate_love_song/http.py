@@ -20,11 +20,11 @@ from .protocol import (
     BrokerProtocolHandler,
 )
 from .serialization import serialize_message, deserialize_message, HelloRequest
+from .settings import Settings
 
 ProtocolCreator = Callable[[], ProtocolHandler]
 
 logger = logging.getLogger(__name__)
-logger.setLevel("INFO")
 
 
 def standard_protocol_creator():
@@ -167,15 +167,21 @@ class FallbackSessionMiddleware(BeakerSessionMiddleware):
         )
 
 
-def get_falcon_api(broker_resource: BrokerResource, use_fallback_sessions=False) -> API:
+def get_falcon_api(
+    broker_resource: BrokerResource,
+    settings: Settings = Settings(),
+    use_fallback_sessions: bool = False,
+) -> API:
+    logging.basicConfig(level=settings.logging.level.value)
+
     beaker_settings = {
-        "session.type": "file",
+        "session.type": settings.beaker.type,
         "session.cookie_expires": True,
         "session.auto": True,  # We got to have this on as things are currently programmed.
         "session.key": "JSESSIONID",
         "session.secure": True,
         "session.httponly": True,
-        "session.data_dir": "C:\\",
+        "session.data_dir": settings.beaker.data_dir,
     }
     beaker_middleware = None
     if not use_fallback_sessions:

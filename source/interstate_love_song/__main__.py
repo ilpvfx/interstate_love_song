@@ -2,9 +2,10 @@ import argparse
 import logging
 
 from .http import get_falcon_api, BrokerResource
+from .settings import Settings, load_settings_json
 
 
-def gunicorn_runner(wsgi, host, port):
+def gunicorn_runner(wsgi, host, port, cert, key):
     from gunicorn.app.base import BaseApplication
 
     class _GunicornApp(BaseApplication):
@@ -30,28 +31,28 @@ def gunicorn_runner(wsgi, host, port):
 
     options = {
         "bind": "{}:{}".format(host, port),
-        "certfile": "selfsign.crt",
-        "keyfile": "selfsign.key",
+        "certfile": cert,
+        "keyfile": key,
         "log-level": "debug",
     }
     _GunicornApp(wsgi, options).run()
 
 
-def werkzeug_runner(wsgi, host, port):
+def werkzeug_runner(wsgi, host, port, cert, key):
     """Doesn't seem to send chunked responses properly, and so won't work with PCOIP-clients it seems."""
     from werkzeug.serving import run_simple
 
-    run_simple(host, port, wsgi, ssl_context=("selfsign.crt", "selfsign.key"))
+    run_simple(host, port, wsgi, ssl_context=(cert, key))
 
 
-def cherrypy_runner(wsgi, host, port):
+def cherrypy_runner(wsgi, host, port, cert, key):
     import cherrypy
     from cherrypy import tree
 
     tree.graft(wsgi, "/")
 
-    cherrypy.server.ssl_certificate = "selfsign.crt"
-    cherrypy.server.ssl_private_key = "selfsign.key"
+    cherrypy.server.ssl_certificate = cert
+    cherrypy.server.ssl_private_key = key
     cherrypy.server.bind_addr = (host, port)
 
     cherrypy.engine.start()
@@ -59,8 +60,6 @@ def cherrypy_runner(wsgi, host, port):
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level="INFO")
-
     argparser = argparse.ArgumentParser("interstate_love_song")
     argparser.add_argument(
         "-s", "--server", choices=["werkzeug", "gunicorn", "cherrypy"], default="gunicorn"
@@ -70,14 +69,22 @@ if __name__ == "__main__":
     argparser.add_argument(
         "--fallback_sessions", action="store_true", help="Use fallback session management."
     )
+    argparser.add_argument("--config", help="Config file.")
+    argparser.add_argument("--cert", default="selfsign.crt")
+    argparser.add_argument("--key", default="selfsign.key")
 
     args = argparser.parse_args()
 
-    wsgi = get_falcon_api(BrokerResource(), use_fallback_sessions=args.fallback_sessions)
+    settings = Settings()
+    if args.config:
+        with open(args.config, "r") as f:
+            settings = load_settings_json(f.read())
+
+    wsgi = get_falcon_api(BrokerResource(), settings, use_fallback_sessions=args.fallback_sessions)
 
     if args.server == "werkzeug":
-        werkzeug_runner(wsgi, args.host, args.port)
+        werkzeug_runner(wsgi, args.host, args.port, args.cert, args.key)
     elif args.server == "gunicorn":
-        gunicorn_runner(wsgi, args.host, args.port)
+        gunicorn_runner(wsgi, args.host, args.port, args.cert, args.key)
     elif args.server == "cherrypy":
-        cherrypy_runner(wsgi, args.host, args.port)
+        cherrypy_runner(wsgi, args.host, args.port, args.cert, args.key)

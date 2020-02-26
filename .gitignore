@@ -106,3 +106,4 @@ venv.bak/
 .idea
 selfsign.crt
 selfsign.key
+settings.json
