@@ -14,7 +14,8 @@ The arguments are:
 
 - -s, --server: can be `gunicorn`, `cherrypy` or `werkzeug`. `gunicorn` is recommended, and default. 
 
-- -p, --port: default is 60443, setting this overrides the settings JSON.
+- --host: (default: localhost)
+- -p, --port: (default: 60443).
 
 - --fallback_sessions: For some reasons, the PCOIP client might not use the cookie if it doesn't like the HTTP transport,
 we suspect this is when the connection is not kept alive. In those situations we can track the session using the 
@@ -22,18 +23,26 @@ we suspect this is when the connection is not kept alive. In those situations we
 wasteful.
 
 - --config: configuration file.
-- --cert: SSL certificate file
-- --key: SSL key file
+- --cert: SSL certificate file, SSL is not optional. (default: selfsign.crt)
+- --key: SSL key file (default: selfsign.key)
 
 
-### Chosing a server
-CherryPy runner is a good choice for development on windows. Werkzeug seems to not work well at all. When using CherryPy,
-`--fallback_sessions` is recommended. 
-
+### Choosing a server
 The Teradici PCOIP client is very picky and particular. The server must use chunked encoding (they claim it supports 
-regular HTTP transmission, but it doesn't.) 
+regular HTTP transmission, but it doesn't.) **SSL is a must**.
 
-The server should preferably support `Connection: Keep-Alive`, or cookies might not be set properly. 
+The server should preferably support `Connection: Keep-Alive`, or cookies might not be set properly.
+
+If you are on *NIX, consider Gunicorn.
+
+CherryPy runner is a good choice for development on windows. `--fallback_sessions` is most likely needed when running CherryPy. 
+
+Werkzeug seems to not work well at all. This is not because Werkzeug is bad, but because of the above reasons, something
+about the communication doesn't jive with the Teradici PCOIP client.
+
+#### Using uWSGI
+
+*Not supported yet*
 
 ## Settings
 
