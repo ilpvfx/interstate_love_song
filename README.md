@@ -17,9 +17,14 @@ Setting this overrides the settings JSON.
 
 - -p, --port: default is 60443, setting this overrides the settings JSON.
 
+- --fallback_sessions: For some reasons, the PCOIP client might not use the cookie if it doesn't like the HTTP transport,
+we suspect this is when the connection is not kept alive. In those situations we can track the session using the 
+`CLIENT-LOG-ID` header instead. Note that you should, if you can, get cookies running since that's more stable and less 
+wasteful.
+
 
 ### Chosing a server
-CherryPy runner is a good choice for development on windows. Werkzeug seems iffy. 
+CherryPy runner is a good choice for development on windows. Werkzeug seems to not work well at all. 
 
 The Teradici PCOIP client is very picky and particular. The server must use chunked encoding (they claim it supports 
 regular HTTP transmission, but it doesn't.) 
@@ -39,5 +44,6 @@ TBD
 - defusedxml
 - xmldiff *(for testing)*
 - beaker
+- falcon_middleware_beaker
 
 If you want to use the CherryPy's runner or Werkzeug, you'll need those packages as well.

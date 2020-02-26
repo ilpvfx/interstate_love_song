@@ -67,10 +67,13 @@ if __name__ == "__main__":
     )
     argparser.add_argument("--host", default="localhost")
     argparser.add_argument("-p", "--port", default=60443, type=int)
+    argparser.add_argument(
+        "--fallback_sessions", action="store_true", help="Use fallback session management."
+    )
 
     args = argparser.parse_args()
 
-    wsgi = get_falcon_api(BrokerResource())
+    wsgi = get_falcon_api(BrokerResource(), use_fallback_sessions=args.fallback_sessions)
 
     if args.server == "werkzeug":
         werkzeug_runner(wsgi, args.host, args.port)

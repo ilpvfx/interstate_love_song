@@ -10,6 +10,8 @@ import falcon
 from defusedxml.ElementTree import fromstring
 from falcon import API
 from falcon_middleware_beaker import BeakerSessionMiddleware
+from beaker.session import SessionObject
+
 from .protocol import (
     ProtocolState,
     ProtocolAction,
@@ -53,9 +55,12 @@ class BeakerSessionSetter(SessionSetter):
         self._request = request
 
     def set_data(self, data: Optional[ProtocolSession]):
-        self._request.env["beaker.session"]["protocol"] = data
+        if not self._request.env["beaker.session"] is None:
+            self._request.env["beaker.session"]["protocol"] = data
 
     def get_data(self):
+        if self._request.env["beaker.session"] is None:
+            return None
         if "protocol" not in self._request.env["beaker.session"]:
             return None
         return self._request.env["beaker.session"]["protocol"]
@@ -134,18 +139,49 @@ class BrokerResource:
             raise falcon.HTTPBadRequest(description="Malformed XML.")
 
 
-def get_falcon_api(broker_resource: BrokerResource) -> API:
-    beaker_middleware = BeakerSessionMiddleware(
-        {
-            "session.type": "file",
-            "session.cookie_expires": True,
-            "session.auto": True,  # We got to have this on as things are currently programmed.
-            "session.key": "JSESSIONID",
-            "session.secure": True,
-            "session.httponly": True,
-            "session.data_dir": "C:\\",
-        }
-    )
+class FallbackSessionMiddleware(BeakerSessionMiddleware):
+    """A work-around session handler for situation where the PCOIP-client doesn't set its cookies properly. You can then
+    use this instead to track the session.
+
+    .. note::
+        The PCOIP-client sends a unique header for each session, we simply use this as our session ID.
+    """
+
+    HEADER_NAME = "CLIENT-LOG-ID"
+
+    def process_request(self, request, *args):
+        session_id = request.headers.get(FallbackSessionMiddleware.HEADER_NAME, None)
+        session = SessionObject(request.env, id=session_id, **self.options)
+
+        request.env[self.environ_key] = session
+
+    def process_response(self, request, response, resource, request_succeded):
+        session = request.env.get(self.environ_key, None)
+        session.persist()
+
+        if not session:
+            return
+
+        return super(FallbackSessionMiddleware, self).process_request(
+            request, response, resource, request_succeded
+        )
+
+
+def get_falcon_api(broker_resource: BrokerResource, use_fallback_sessions=False) -> API:
+    beaker_settings = {
+        "session.type": "file",
+        "session.cookie_expires": True,
+        "session.auto": True,  # We got to have this on as things are currently programmed.
+        "session.key": "JSESSIONID",
+        "session.secure": True,
+        "session.httponly": True,
+        "session.data_dir": "C:\\",
+    }
+    beaker_middleware = None
+    if not use_fallback_sessions:
+        beaker_middleware = BeakerSessionMiddleware(beaker_settings)
+    else:
+        beaker_middleware = FallbackSessionMiddleware(beaker_settings)
 
     api = API(middleware=beaker_middleware)
     api.add_route("/pcoip-broker/xml", resource=broker_resource)
