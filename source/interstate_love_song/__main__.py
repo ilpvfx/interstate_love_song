@@ -72,8 +72,6 @@ if __name__ == "__main__":
 
     wsgi = get_falcon_api(BrokerResource())
 
-    twisted_runner(wsgi, args.host, args.port)
-
     if args.server == "werkzeug":
         werkzeug_runner(wsgi, args.host, args.port)
     elif args.server == "gunicorn":
