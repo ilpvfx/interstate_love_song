@@ -42,6 +42,28 @@ Generate a default config with:
 python -m interstate_love_song.settings > ../settings.json
 ```
 
+## Mappers
+Mappers assign resources to users; in plain english, they decide which Teradici machines, if any, to present to a 
+connecting client.
+
+### SimpleMapper
+
+The Simple Mapper is, indeed simple. It authenticates only one, common, user. It returns a given set of resources for
+this user, with no special logic.
+
+The Simple Mapper is mostly for testing and to serve as a reference implementation.
+
+#### Generating a password hash
+The username and password is stored in the settings. To provide a modicum of security over a plaintext password, we require
+the password to be "pre-hashed". That way we won't store a plaintext password anywhere.
+
+To generate a hashed password, simply call:
+
+```shell script
+python -m interstate_love_song.mapping.simple "a very long password"
+```
+
+
 ## Requirements
 
 - Python 3.7+
