@@ -124,6 +124,14 @@ class BrokerResource:
             new_session_data, out_msg = protocol(in_msg, session_setter.get_data())
             session_setter.set_data(new_session_data)
 
+            if out_msg is None:
+                logger.warning(
+                    "protocol returned None as the response, this probably means sessions are not working as they should."
+                )
+                raise falcon.HTTPInternalServerError(
+                    description="Unexpected message received, probably a bug."
+                )
+
             f = BytesIO()
             ElementTree(self._serialize(out_msg)).write(f, encoding="utf-8", xml_declaration=True)
 
