@@ -17,10 +17,10 @@ The arguments are:
 - --host: (default: localhost)
 - -p, --port: (default: 60443).
 
-- --fallback_sessions: For some reasons, the PCOIP client might not use the cookie if it doesn't like the HTTP transport,
-we suspect this is when the connection is not kept alive. In those situations we can track the session using the 
-`CLIENT-LOG-ID` header instead. Note that you should, if you can, get cookies running since that's more stable and less 
-wasteful.
+- --fallback_sessions: In some cases, the PCOIP client might not use the cookie if the header doesn't have the correct case.
+HTTP spec says header names are case insensitive, but the PCOIP-client thinks some of them should be. In those situations 
+we can track the session using the `CLIENT-LOG-ID` header instead. Note that you should, if you can, get cookies running 
+since that's more stable and less wasteful.
 
 - --config: configuration file.
 - --cert: SSL certificate file, SSL is not optional. (default: selfsign.crt)
@@ -28,14 +28,16 @@ wasteful.
 
 
 ### Choosing a server
-The Teradici PCOIP client is very picky and particular. The server must use chunked encoding (they claim it supports 
-regular HTTP transmission, but it doesn't.) **SSL is a must**.
-
-The server should preferably support `Connection: Keep-Alive`, or cookies might not be set properly.
+The Teradici PCOIP client is very picky and particular. 
+- The server must use chunked encoding (they claim it supports 
+regular HTTP transmission, but it doesn't.) 
+- **SSL is a must**. 
+- The cookie set header must be explicitly "Set-Cookie", no
+other case is allowed.
 
 If you are on *NIX, consider Gunicorn.
 
-CherryPy runner is a good choice for development on windows. `--fallback_sessions` is most likely needed when running CherryPy. 
+CherryPy runner is a good choice for development on windows. `--fallback_sessions` might be needed when running CherryPy. 
 
 Werkzeug seems to not work well at all. This is not because Werkzeug is bad, but because of the above reasons, something
 about the communication doesn't jive with the Teradici PCOIP client.
@@ -77,11 +79,12 @@ python -m interstate_love_song.mapping.simple "a very long password"
 
 - Python 3.7+
 - falcon
-- gunicorn
 - pytest *(for testing)*
 - defusedxml
 - xmldiff *(for testing)*
 - beaker
 - falcon_middleware_beaker
+
+If you want to run Gunicorn, you need gunicorn and gevent.
 
 If you want to use the CherryPy's runner or Werkzeug, you'll need those packages as well.

@@ -2,6 +2,7 @@ import logging
 from abc import ABC, abstractmethod
 from io import BytesIO
 
+from falcon.util import compat
 from pyexpat import ExpatError
 from typing import Callable, Any, Optional
 from xml.etree.ElementTree import ParseError, tostring, ElementTree
@@ -12,6 +13,7 @@ from falcon import API
 from falcon_middleware_beaker import BeakerSessionMiddleware
 from beaker.session import SessionObject
 
+from .mapping import Mapper
 from .protocol import (
     ProtocolState,
     ProtocolAction,
@@ -22,13 +24,16 @@ from .protocol import (
 from .serialization import serialize_message, deserialize_message, HelloRequest
 from .settings import Settings
 
-ProtocolCreator = Callable[[], ProtocolHandler]
+ProtocolCreator = Callable[[Mapper], ProtocolHandler]
 
 logger = logging.getLogger(__name__)
 
 
-def standard_protocol_creator():
-    return BrokerProtocolHandler()
+def standard_protocol_creator(mapper: Mapper):
+    def creator():
+        return BrokerProtocolHandler(mapper)
+
+    return creator
 
 
 class SessionSetter(ABC):
@@ -79,7 +84,7 @@ class BrokerResource:
 
     def __init__(
         self,
-        protocol_creator: ProtocolCreator = standard_protocol_creator,
+        protocol_creator: ProtocolCreator,
         serialize=serialize_message,
         deserialize=deserialize_message,
         session_setter_creator: SessionSetterCreator = beaker_session_creator,
@@ -110,7 +115,6 @@ class BrokerResource:
         protocol = self._protocol_creator()
 
         session_setter = self._session_setter_creator(req)
-        print(req.cookies)
 
         try:
             xml_str = req.bounded_stream.read()
@@ -126,7 +130,7 @@ class BrokerResource:
 
             if out_msg is None:
                 logger.warning(
-                    "protocol returned None as the response, this probably means sessions are not working as they should."
+                    "protocol returned None as the response, this MIGHT mean sessions are not working as they should."
                 )
                 raise falcon.HTTPInternalServerError(
                     description="Unexpected message received, probably a bug."
@@ -175,6 +179,22 @@ class FallbackSessionMiddleware(BeakerSessionMiddleware):
         )
 
 
+class CookieCaseFixedResponse(falcon.Response):
+    """A Response type whose sole purpose is to set the case on "set-cookie" headers to the explicit case "Set-Cookie".
+
+    This is because the Teradici PCOIP client REQUIRES this case for it to accept the cookie. Yeah don't ask me.
+    """
+
+    def _wsgi_headers(self, media_type=None, py2=compat.PY2):
+        items = super()._wsgi_headers(media_type, py2)
+        new_items = []
+        for name, value in items:
+            if name.lower() == "set-cookie":
+                name = "Set-Cookie"
+            new_items.append((name, value))
+        return new_items
+
+
 def get_falcon_api(
     broker_resource: BrokerResource,
     settings: Settings = Settings(),
@@ -197,7 +217,7 @@ def get_falcon_api(
     else:
         beaker_middleware = FallbackSessionMiddleware(beaker_settings)
 
-    api = API(middleware=beaker_middleware)
+    api = API(middleware=beaker_middleware, response_type=CookieCaseFixedResponse)
     api.add_route("/pcoip-broker/xml", resource=broker_resource)
 
     return api

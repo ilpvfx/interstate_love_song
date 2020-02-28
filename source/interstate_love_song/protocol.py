@@ -3,6 +3,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Sequence, Any, Tuple, Optional, Callable
 
+from interstate_love_song.mapping import Mapper, Resource, MapperStatus
 from interstate_love_song.transport import (
     Message,
     HelloRequest,
@@ -16,6 +17,7 @@ from interstate_love_song.transport import (
     ByeRequest,
     ByeResponse,
     TeradiciResource,
+    AuthenticateFailedResponse,
 )
 from interstate_love_song._version import __version__
 
@@ -37,6 +39,7 @@ class ProtocolSession:
     username: Optional[str] = None
     password: Optional[str] = None
     state: ProtocolState = ProtocolState.WAITING_FOR_HELLO
+    resources: Sequence[Resource] = field(default_factory=lambda: [])
 
 
 ProtocolAction = Tuple[Optional[ProtocolSession], Optional[Message]]
@@ -52,8 +55,19 @@ class BrokerProtocolHandler:
     """Implements the logical level of the broker protocol. It is implemented as a state machine where state
     transitions happen based on the values of the message and the broker session."""
 
-    def __init__(self):
-        pass
+    def __init__(self, mapper: Mapper):
+        """
+        :param mapper:
+            A mapper to use for authentication and resource assignment.
+        :raises ValueError:
+        """
+        if not isinstance(mapper, Mapper):
+            raise ValueError("Expected a Mapper instance.")
+        self._mapper = mapper
+
+    @property
+    def mapper(self) -> Mapper:
+        return self._mapper
 
     def __call__(self, msg: Message, session: Optional[ProtocolSession]) -> ProtocolAction:
         """Handles the message and returns the new state, session data and the response.
@@ -117,23 +131,34 @@ class BrokerProtocolHandler:
         self, msg: AuthenticateRequest, session: Optional[ProtocolSession]
     ) -> ProtocolAction:
         _assert_session_exist(session)
-        # TODO: Do better auth here.
-        session.username = msg.username
-        session.password = msg.password
-        session.state = ProtocolState.WAITING_FOR_GETRESOURCELIST
-        return session, AuthenticateSuccessResponse()
+
+        mapper_status, resources = self.mapper.map((msg.username, msg.password))
+        if mapper_status == MapperStatus.SUCCESS:
+            session.username = msg.username
+            session.password = msg.password
+            session.state = ProtocolState.WAITING_FOR_GETRESOURCELIST
+            session.resources = resources
+            return session, AuthenticateSuccessResponse()
+        else:
+            session.username = None
+            session.password = None
+            session.state = ProtocolState.WAITING_FOR_AUTHENTICATE
+            session.resources = []
+            return session, AuthenticateFailedResponse()
 
     def _get_resource_list(
         self, msg: GetResourceListRequest, session: Optional[ProtocolSession]
     ) -> ProtocolAction:
         _assert_session_exist(session)
         session.state = ProtocolState.WAITING_FOR_ALLOCATERESOURCE
-        return (
-            session,
-            GetResourceListResponse(
-                [TeradiciResource("Ernst Hugo Järegård", "1"), TeradiciResource("Gösta Ekman", "2")]
-            ),
-        )
+
+        def teradicis():
+            i = 0
+            for resource in session.resources:
+                yield TeradiciResource(resource.name, str(i))
+                i += 1
+
+        return session, GetResourceListResponse(list(teradicis()))
 
     def _allocate_resource(
         self, msg: AllocateResourceRequest, session: Optional[ProtocolSession]
