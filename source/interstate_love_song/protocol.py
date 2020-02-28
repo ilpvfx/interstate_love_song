@@ -27,6 +27,10 @@ import socket
 
 
 class ProtocolState(Enum):
+    """The different states the protocol may find itself in. The error states are not represented, we just send an error
+    response and either stay in a state or go to WAITING_FOR_HELLO.
+    """
+
     WAITING_FOR_HELLO = 0
     WAITING_FOR_AUTHENTICATE = 1
     WAITING_FOR_GETRESOURCELIST = 2
@@ -36,6 +40,9 @@ class ProtocolState(Enum):
 
 @dataclass
 class ProtocolSession:
+    """Holds state data for the protocol. The Protocol handler is stateless itself.
+    """
+
     username: Optional[str] = None
     password: Optional[str] = None
     state: ProtocolState = ProtocolState.WAITING_FOR_HELLO
@@ -53,7 +60,13 @@ def _assert_session_exist(s: Optional[ProtocolSession]):
 
 class BrokerProtocolHandler:
     """Implements the logical level of the broker protocol. It is implemented as a state machine where state
-    transitions happen based on the values of the message and the broker session."""
+    transitions happen based on the values of the message and the broker session.
+
+    This means that the handler is completely stateless in itself, it only depends on inputs and is almost deterministic,
+    the exceptions are:
+        - when asked to allocate a resource, since it depends upon the answer from the Teradici resource.
+        - the mapper may not be deterministic.
+    """
 
     def __init__(self, mapper: Mapper):
         """
@@ -118,6 +131,11 @@ class BrokerProtocolHandler:
             return None, None
 
     def _hello(self, msg: HelloRequest, session: Optional[ProtocolSession]) -> ProtocolAction:
+        """We may get two hello messages in this situation.
+        - A hello with the product name "QueryBrokerClient". The PCOIP-client sends this to check whether it's dealing
+          directly with a machine or a broker.
+        - A hello with the clients real product name, that's when we want our session to start.
+        """
         hostname = socket.gethostname()
         response = HelloResponse(hostname)
         # The PCOIP-client sends a hello with this as the product name to check if we are connecting to a broker
@@ -130,6 +148,11 @@ class BrokerProtocolHandler:
     def _authenticate(
         self, msg: AuthenticateRequest, session: Optional[ProtocolSession]
     ) -> ProtocolAction:
+        """We only expect authenticate messages here. When we get one, we ask the mapper to authenticate and return
+        the assigned resources.
+
+        If authentication fails, the PCOIP client may try again, so this may transition back to itself.
+        """
         _assert_session_exist(session)
 
         mapper_status, resources = self.mapper.map((msg.username, msg.password))
@@ -149,6 +172,9 @@ class BrokerProtocolHandler:
     def _get_resource_list(
         self, msg: GetResourceListRequest, session: Optional[ProtocolSession]
     ) -> ProtocolAction:
+        """This means authentication was successful. We have already assigned resources, those are in the session, so we
+        can just return those. We need to be careful with resource IDs.
+        """
         _assert_session_exist(session)
         session.state = ProtocolState.WAITING_FOR_ALLOCATERESOURCE
 
@@ -163,6 +189,9 @@ class BrokerProtocolHandler:
     def _allocate_resource(
         self, msg: AllocateResourceRequest, session: Optional[ProtocolSession]
     ) -> ProtocolAction:
+        """The client should now ask us to allocate a session on a chosen machine. So we need to communicate with the
+        machine and obtain a session.
+        """
         _assert_session_exist(session)
 
         session.state = ProtocolState.WAITING_FOR_BYE

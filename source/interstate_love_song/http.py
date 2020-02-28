@@ -30,6 +30,8 @@ logger = logging.getLogger(__name__)
 
 
 def standard_protocol_creator(mapper: Mapper):
+    """Curries a creator function with the given mapper. The creator returns a BrokerProtocolHandler."""
+
     def creator():
         return BrokerProtocolHandler(mapper)
 
@@ -60,12 +62,9 @@ class BeakerSessionSetter(SessionSetter):
         self._request = request
 
     def set_data(self, data: Optional[ProtocolSession]):
-        if not self._request.env["beaker.session"] is None:
-            self._request.env["beaker.session"]["protocol"] = data
+        self._request.env["beaker.session"]["protocol"] = data
 
     def get_data(self):
-        if self._request.env["beaker.session"] is None:
-            return None
         if "protocol" not in self._request.env["beaker.session"]:
             return None
         return self._request.env["beaker.session"]["protocol"]
@@ -186,9 +185,12 @@ class CookieCaseFixedResponse(falcon.Response):
     """
 
     def _wsgi_headers(self, media_type=None, py2=compat.PY2):
+        # Traverse the headers returned and just fixup those named "set-cookie".
         items = super()._wsgi_headers(media_type, py2)
         new_items = []
         for name, value in items:
+            # Important to do a case insensitive match here, since it looks like future Falcon versions may preserve
+            # case.
             if name.lower() == "set-cookie":
                 name = "Set-Cookie"
             new_items.append((name, value))
