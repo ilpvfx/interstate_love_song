@@ -1,7 +1,8 @@
 import argparse
 import logging
 
-from .http import get_falcon_api, BrokerResource
+from interstate_love_song.mapping import SimpleMapper
+from .http import get_falcon_api, BrokerResource, standard_protocol_creator
 from .settings import Settings, load_settings_json
 
 
@@ -34,7 +35,9 @@ def gunicorn_runner(wsgi, host, port, cert, key):
         "certfile": cert,
         "keyfile": key,
         "log-level": "debug",
+        "worker_class": "gevent",
     }
+
     _GunicornApp(wsgi, options).run()
 
 
@@ -80,7 +83,17 @@ if __name__ == "__main__":
         with open(args.config, "r") as f:
             settings = load_settings_json(f.read())
 
-    wsgi = get_falcon_api(BrokerResource(), settings, use_fallback_sessions=args.fallback_sessions)
+    simple_mapper = SimpleMapper(
+        settings.simple_mapper.username,
+        settings.simple_mapper.password_hash,
+        [res.hostname for res in settings.simple_mapper.resources],
+    )
+
+    wsgi = get_falcon_api(
+        BrokerResource(standard_protocol_creator(simple_mapper)),
+        settings,
+        use_fallback_sessions=args.fallback_sessions,
+    )
 
     if args.server == "werkzeug":
         werkzeug_runner(wsgi, args.host, args.port, args.cert, args.key)

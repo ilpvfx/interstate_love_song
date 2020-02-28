@@ -1,4 +1,5 @@
 import json
+from typing import Sequence
 from dataclasses import dataclass
 
 from pytest import raises
@@ -6,6 +7,8 @@ from pytest import raises
 from interstate_love_song import settings
 import pytest
 from argparse import Namespace
+
+from interstate_love_song.mapping import Resource
 
 
 @dataclass
@@ -69,6 +72,34 @@ def test_load_dict_into_dataclass_type_is_dataclass():
     assert data.b.b == 321
 
 
+@dataclass
+class DummyData4:
+    a: Sequence[str]
+    b: Sequence[DummyData]
+
+
+def test_load_dict_into_dataclass_type_is_list():
+    data = settings._load_dict_into_dataclass(
+        DummyData4,
+        {
+            "a": ["Euler", "Leonhard"],
+            "b": [{"required": 123, "a": "Test"}, {"required": 256, "b": 666}],
+        },
+    )
+
+    assert data.a == ["Euler", "Leonhard"]
+    assert isinstance(data.b, list)
+    assert len(data.b) == 2
+
+    assert data.b[0].required == 123.0
+    assert data.b[0].a == "Test"
+    assert data.b[0].b == 123
+
+    assert data.b[1].required == 256.0
+    assert data.b[1].a == "Riemann"
+    assert data.b[1].b == 666
+
+
 from enum import Enum
 
 
@@ -100,18 +131,33 @@ def test_load_settings_json():
 
     beaker = Namespace(type="Riemann", data_dir="Erdos",)
 
+    simple_mapper = Namespace(
+        username="Kurt",
+        password_hash="Gödel",
+        resource_name="Kurt's Machine",
+        resource_hostname="kurt.godel.edu",
+    )
+
     raw_settings_json = """
     {{
         "logging": {{
-            "level": "{logging.level}",
+            "level": "{logging.level}"
         }},
         "beaker": {{
             "type": "{beaker.type}",
             "data_dir": "{beaker.data_dir}"
+        }},
+        "simple_mapper" : {{
+            "username": "{simple_mapper.username}", "password_hash": "{simple_mapper.password_hash}", 
+            "resources": [{{
+                "name": "{simple_mapper.resource_name}",
+                "hostname": "{simple_mapper.resource_hostname}"
+            }}]
         }}
+
     }}
     """.format(
-        logging=logging, beaker=beaker
+        logging=logging, beaker=beaker, simple_mapper=simple_mapper
     )
 
     result = settings.load_settings_json(raw_settings_json)
@@ -120,8 +166,15 @@ def test_load_settings_json():
     assert result.logging.level == settings.LoggingLevel.INFO
 
     assert isinstance(result.beaker, settings.BeakerSettings)
-    assert result.beaker.type is beaker.type
-    assert result.beaker.data_dir is beaker.data_dir
+    assert result.beaker.type == beaker.type
+    assert result.beaker.data_dir == beaker.data_dir
+
+    assert isinstance(result.simple_mapper, settings.SimpleMapperSettings)
+    assert result.simple_mapper.username == simple_mapper.username
+    assert result.simple_mapper.password_hash == simple_mapper.password_hash
+    assert result.simple_mapper.resources == [
+        Resource(simple_mapper.resource_name, simple_mapper.resource_hostname)
+    ]
 
 
 def test_load_settings_json_missing_database():

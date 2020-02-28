@@ -1,8 +1,10 @@
 import dataclasses
 import json
 from dataclasses import dataclass
-from typing import Mapping, Any, TypeVar, Type, Optional
+from typing import Mapping, Any, TypeVar, Type, Optional, Sequence
 from enum import Enum
+
+from interstate_love_song.mapping import Resource
 
 
 class SettingsError(Exception):
@@ -29,33 +31,47 @@ def _load_dict_into_dataclass(dc: Type[T], dict: Mapping[str, Any]) -> T:
         - type
     Assumes the dataclass has a default __init__.
     For each field in the dataclass, looks for a corresponding field in dict.
+
     If a field has a default it is allowed to be omitted from the dict. The final value is then the
     default.
+
     If a property name match exists, but the type mismatches, the type constructor is called on the value stored in the
     dict. If an exception is thrown, this will result in a SettingsError
+
     If a field is of a type that is a dataclass itself, that property should itself be represented by a dictionary.
     It will get loaded with a subsequent call to __load_dict_into_dataclass.
+
+    If a field is of a type Sequence[T], it will expect a list of convertible values.
+
     It does not handle fields with a type that is a Union, like Optional[Something] or Union[str, int].
+
     :raises SettingsError: a field without a default was missing from the dict. A type conversion failed.
     """
     props = {}
 
     fields = dataclasses.fields(dc)
+
+    def process(tp, val):
+        if dataclasses.is_dataclass(tp):
+            val = _load_dict_into_dataclass(tp, val)
+        elif hasattr(tp, "_name") and tp._name == "Sequence":
+            val = [process(tp.__args__[0], item) for item in val]
+        elif issubclass(tp, Enum):
+            try:
+                val = tp[str(val)]
+            except KeyError as ke:
+                raise SettingsError("Failure to convert {} to enum of {}.".format(val, tp))
+        elif type(val) != tp:
+            try:
+                val = tp(val)
+            except Exception as e:
+                raise SettingsError("Failure to convert value: {}".format(e))
+        return val
+
     for f in fields:
         if f.name in dict:
             val = dict[f.name]
-            if dataclasses.is_dataclass(f.type):
-                val = _load_dict_into_dataclass(f.type, val)
-            elif issubclass(f.type, Enum):
-                try:
-                    val = f.type[str(val)]
-                except KeyError as ke:
-                    raise SettingsError("Failure to convert {} to enum of {}.".format(val, f.type))
-            elif type(val) != f.type:
-                try:
-                    val = f.type(val)
-                except Exception as e:
-                    raise SettingsError("Failure to convert value: {}".format(e))
+            val = process(f.type, val)
             props[f.name] = val
         else:
             if f.default is dataclasses.MISSING:
@@ -91,12 +107,20 @@ class LoggingSettings:
     level: LoggingLevel = LoggingLevel.INFO
 
 
+@dataclass
+class SimpleMapperSettings:
+    username: str = "test"
+    password_hash: str = "change_me"
+    resources: Sequence[Resource] = dataclasses.field(default_factory=lambda: [])
+
+
 @dataclass()
 class Settings:
     """Holds the settings. Fields with a default may be omitted in the config."""
 
     logging: LoggingSettings = LoggingSettings()
     beaker: BeakerSettings = BeakerSettings()
+    simple_mapper: SimpleMapperSettings = SimpleMapperSettings()
 
     @classmethod
     def load_dict(cls, data: Mapping[str, Any]):
@@ -108,7 +132,8 @@ def load_settings_json(json_str: str) -> Settings:
     """Loads the settings from a JSON string. The JSON should be structured as follows:
         {
             "beaker": {"type": ?, "data_dir": ?},
-            "logging": {"level": ?}
+            "logging": {"level": ?},
+            "simple_mapper" : {"username": ?, "password_hash": ?, "resources": [?, ...?]}
         }
     """
     data = json.loads(json_str)
