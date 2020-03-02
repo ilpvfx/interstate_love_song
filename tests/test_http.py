@@ -10,7 +10,7 @@ from falcon.testing import TestClient
 from interstate_love_song.protocol import BrokerProtocolHandler, ProtocolState, ProtocolSession
 from interstate_love_song.http import BrokerResource, get_falcon_api, SessionSetter
 from interstate_love_song.transport import HelloResponse, HelloRequest
-from test_protocol import DummyMapper
+from .test_protocol import DummyMapper
 
 
 def test_broker_resource_constructor():

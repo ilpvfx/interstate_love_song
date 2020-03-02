@@ -22,7 +22,6 @@ from interstate_love_song.transport import (
     AuthenticateFailedResponse,
     AllocateResourceFailureResponse,
 )
-from interstate_love_song._version import __version__
 
 logger = logging.getLogger(__name__)
 

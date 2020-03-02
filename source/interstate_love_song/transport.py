@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Sequence, Callable, Any
 
-from ._version import __version__
+from ._version import VERSION
 
 
 class Message:
@@ -27,7 +27,7 @@ class HelloResponse(Message):
 
     hostname: str
     product_name: str = "Interstate Love Song"
-    product_version: str = __version__
+    product_version: str = VERSION
     platform: str = "linux"
     locale: str = "en_US"
     ip_address: str = "N/A"

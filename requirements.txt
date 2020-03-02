@@ -1,8 +1,8 @@
-falcon
-pytest
-defusedxml
-xmldiff
-beaker
-falcon_middleware_beaker
-requests
-httpretty
+falcon==2.0.0
+pytest==5.3.5
+defusedxml==0.6.0
+xmldiff==2.4
+beaker==1.11.0
+falcon_middleware_beaker==0.0.1
+requests==2.22.0
+httpretty==0.9.7
