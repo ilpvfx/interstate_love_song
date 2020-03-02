@@ -84,6 +84,8 @@ python -m interstate_love_song.mapping.simple "a very long password"
 - xmldiff *(for testing)*
 - beaker
 - falcon_middleware_beaker
+- requests
+- httpretty *(for testing)*
 
 If you want to run Gunicorn, you need gunicorn and gevent.
 

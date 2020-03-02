@@ -132,8 +132,28 @@ def test_serialize_message_get_resource_list_response():
 
 
 def test_serialize_message_allocate_resource_success_response():
-    msg = AllocateResourceSuccessResponse("euler", "lagrange", "lagrange", 666, "1234", "1234", 999)
-
+    msg = AllocateResourceSuccessResponse(
+        "euler", "euler.gov", "lagrange", 666, "1234", "1234", 999
+    )
+    """<?xml version="1.0" encoding="UTF-8"?>
+<pcoip-client version="2.1">
+  <allocate-resource-resp>
+    <result>
+      <result-id>ALLOC_SUCCESSFUL</result-id>
+      <result-str>Resource was allocated successfully.</result-str>
+    </result>
+    <target>
+      <ip-address>172.18.32.93</ip-address>
+      <hostname>mymachine.example.com</hostname>
+      <sni>vmwr-test-01.example.com</sni>
+      <port>4172</port>
+      <session-id>2305843009213693964</session-id>
+      <connect-tag>SCS1D7S2ekLz5SRNKkiK29VyGSokKJqMvjLQ9a1VZRG8sS6BozCGrzteXeky8x8SVd3sapfTFS2Y684qq8mBYjQ0pYNayUKVYmWfOCIA</connect-tag>
+    </target>
+    <resource-id>1</resource-id>
+    <protocol>PCOIP</protocol>
+  </allocate-resource-resp>
+</pcoip-client>"""
     expected = """<?xml version="1.0"?>
     <pcoip-client version="2.1">
         <allocate-resource-resp>

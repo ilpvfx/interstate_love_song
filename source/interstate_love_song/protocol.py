@@ -3,6 +3,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Sequence, Any, Tuple, Optional, Callable
 
+from interstate_love_song import agent
 from interstate_love_song.mapping import Mapper, Resource, MapperStatus
 from interstate_love_song.transport import (
     Message,
@@ -77,6 +78,7 @@ class BrokerProtocolHandler:
         if not isinstance(mapper, Mapper):
             raise ValueError("Expected a Mapper instance.")
         self._mapper = mapper
+        self._allocate_session = agent.allocate_session
 
     @property
     def mapper(self) -> Mapper:
@@ -195,16 +197,22 @@ class BrokerProtocolHandler:
         _assert_session_exist(session)
 
         session.state = ProtocolState.WAITING_FOR_BYE
+
+        hostname = session.resources[msg.resource_id].hostname
+        agent_session = self._allocate_session(
+            msg.resource_id, hostname, session.username, session.password
+        )
+
         return (
             session,
             AllocateResourceSuccessResponse(
-                ip_address="NO BUENO",
-                hostname="NO BUENO",
-                sni="NO BUENO",
-                port=666,
-                session_id="NO BUENO",
-                connect_tag="NO BUENO",
-                resource_id=1,
+                ip_address=agent_session.ip_address,
+                hostname=hostname,
+                sni=agent_session.sni,
+                port=agent_session.port,
+                session_id=agent_session.session_id,
+                connect_tag=agent_session.session_tag,
+                resource_id=int(agent_session.resource_id),
             ),
         )
 

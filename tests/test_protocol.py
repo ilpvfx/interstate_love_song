@@ -222,7 +222,6 @@ def test_broker_protocol_handler_call_waiting_for_allocateresource_allocateresou
     # TODO: test asking the Teradici machines for a session etc.
 
     assert isinstance(response, AllocateResourceSuccessResponse)
-    assert response.hostname == "NO BUENO"
     assert response.sni == "NO BUENO"
     assert response.port == 666
     assert response.session_id == "NO BUENO"

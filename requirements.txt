@@ -5,3 +5,5 @@ defusedxml
 xmldiff
 beaker
 falcon_middleware_beaker
+requests
+httpretty
