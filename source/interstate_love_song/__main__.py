@@ -1,6 +1,7 @@
 import argparse
 import logging
 
+from interstate_love_song._version import VERSION
 from interstate_love_song.mapping import SimpleMapper
 from .http import get_falcon_api, BrokerResource, standard_protocol_creator
 from .settings import Settings, load_settings_json
@@ -63,7 +64,30 @@ def cherrypy_runner(wsgi, host, port, cert, key):
     cherrypy.engine.block()
 
 
+def print_logo():
+    data = """
+             ________      _____                   _____       _____      
+         ____  _/________  /_____________________  /______ __  /_____ 
+          __  / __  __ \  __/  _ \_  ___/_  ___/  __/  __ `/  __/  _ \\
+         __/ /  _  / / / /_ /  __/  /   _(__  )/ /_ / /_/ // /_ /  __/
+         /___/  /_/ /_/\__/ \___//_/    /____/ \__/ \__,_/ \__/ \___/ 
+                                                                      
+          ______                         ________                     
+          ___  / _________   ______      __  ___/___________________ _
+          __  /  _  __ \_ | / /  _ \     _____ \_  __ \_  __ \_  __ `/
+          _  /___/ /_/ /_ |/ //  __/     ____/ // /_/ /  / / /  /_/ / 
+          /_____/\____/_____/ \___/      /____/ \____//_/ /_/_\__, /  v{}
+                                                             /____/
+          
+    """.format(
+        VERSION
+    )
+    print(data)
+
+
 if __name__ == "__main__":
+    print_logo()
+
     argparser = argparse.ArgumentParser("interstate_love_song")
     argparser.add_argument(
         "-s", "--server", choices=["werkzeug", "gunicorn", "cherrypy"], default="gunicorn"
