@@ -47,6 +47,9 @@ class AuthenticateRequest(Message):
     username: str
     password: str
 
+    def __repr__(self):
+        return f"AuthenticateRequest(username={self.username!r}, password=<redacted>)"
+
 
 @dataclass
 class AuthenticateSuccessResponse(Message):
