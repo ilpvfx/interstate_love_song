@@ -6,7 +6,7 @@ from .http import get_falcon_api, BrokerResource, standard_protocol_creator
 from .settings import Settings, load_settings_json
 
 
-def gunicorn_runner(wsgi, host, port, cert, key):
+def gunicorn_runner(wsgi, host, port, cert, key, worker_class="gevent", workers=2):
     from gunicorn.app.base import BaseApplication
 
     class _GunicornApp(BaseApplication):
@@ -35,7 +35,8 @@ def gunicorn_runner(wsgi, host, port, cert, key):
         "certfile": cert,
         "keyfile": key,
         "log-level": "debug",
-        "worker_class": "gevent",
+        "worker_class": worker_class,
+        "workers": workers,
     }
 
     _GunicornApp(wsgi, options).run()
@@ -75,6 +76,12 @@ if __name__ == "__main__":
     argparser.add_argument("--config", help="Config file.")
     argparser.add_argument("--cert", default="selfsign.crt")
     argparser.add_argument("--key", default="selfsign.key")
+    argparser.add_argument(
+        "--gunicorn-worker-class", default="gevent", help="only matters if -s gunicorn."
+    )
+    argparser.add_argument(
+        "--gunicorn-workers", default=2, type=int, help="only matters if -s gunicorn."
+    )
 
     args = argparser.parse_args()
 
@@ -98,6 +105,14 @@ if __name__ == "__main__":
     if args.server == "werkzeug":
         werkzeug_runner(wsgi, args.host, args.port, args.cert, args.key)
     elif args.server == "gunicorn":
-        gunicorn_runner(wsgi, args.host, args.port, args.cert, args.key)
+        gunicorn_runner(
+            wsgi,
+            args.host,
+            args.port,
+            args.cert,
+            args.key,
+            worker_class=args.gunicorn_worker_class,
+            workers=args.gunicorn_workers,
+        )
     elif args.server == "cherrypy":
         cherrypy_runner(wsgi, args.host, args.port, args.cert, args.key)

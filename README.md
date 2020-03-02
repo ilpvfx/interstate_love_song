@@ -25,7 +25,8 @@ since that's more stable and less wasteful.
 - --config: configuration file.
 - --cert: SSL certificate file, SSL is not optional. (default: selfsign.crt)
 - --key: SSL key file (default: selfsign.key)
-
+- --gunicorn-worker-class: see gunicorn config (default: gevent)
+- --gunicorn-workers: see gunicorn config (default: 2)
 
 ### Choosing a server
 The Teradici PCOIP client is very picky and particular. 
@@ -42,15 +43,57 @@ CherryPy runner is a good choice for development on windows. `--fallback_session
 Werkzeug seems to not work well at all. This is not because Werkzeug is bad, but because of the above reasons, something
 about the communication doesn't jive with the Teradici PCOIP client.
 
-#### Using uWSGI
-
-*Not supported yet*
 
 ## Settings
 
 Generate a default config with:
 ```shell script
 python -m interstate_love_song.settings > ../settings.json
+```
+
+### Sections
+
+The settings file is a JSON file with the following sections. Each section is its own JSON object.
+
+#### logging
+
+`level`: str; `INFO` or `DEBUG` (`INFO`)
+
+#### beaker
+
+Check out the [Beaker docs](https://beaker.readthedocs.io/en/latest/configuration.html).
+
+`type`: str; session store type (`file`)
+
+`data_dir`: str; session store location (`/tmp`)
+
+#### simple_mapper
+
+`username`: str; authentication user (`test`)
+
+`password_hash`: str; authentication password, see the Simple Mapper section (`change_me`)
+
+`resources`: Sequence[Resource]; the resources to present (`[]`)
+
+For example:
+```json
+{
+    "username": "kolmogorov", "password_hash": "goodluckgettingthishash",
+    "resources": [
+      {
+        "name": "Elisabeth Taylor",
+        "hostname": "vmwr-test-01.example.com"
+      },
+      {
+        "name": "James Dean",
+        "hostname": "vmwr-test-01.example.com"
+      },
+      {
+        "name": "Marlon Brando",
+        "hostname": "localhost"
+      }
+    ]
+}
 ```
 
 ## Mappers
@@ -87,6 +130,7 @@ python -m interstate_love_song.mapping.simple "a very long password"
 - requests
 - httpretty *(for testing)*
 
-If you want to run Gunicorn, you need gunicorn and gevent.
+If you want to run Gunicorn, you need gunicorn and possibly dependencies needed by the worker class. For example, 
+"gevent", naturally requires "gevent".
 
 If you want to use the CherryPy's runner or Werkzeug, you'll need those packages as well.
