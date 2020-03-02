@@ -24,16 +24,17 @@ def serialize_message(msg: Message) -> Element:
 
     msg_type = type(msg)
 
-    if msg_type is HelloResponse:
-        return _serialize_hello_response(msg)
-    elif msg_type is AuthenticateSuccessResponse:
-        return _serialize_authenticate_response(msg)
-    elif msg_type is AuthenticateFailedResponse:
-        return _serialize_authenticate_failed_response(msg)
-    elif msg_type is GetResourceListResponse:
-        return _serialize_get_resource_list_response(msg)
-    elif msg_type is AllocateResourceSuccessResponse:
-        return _serialize_allocate_resource_success_response(msg)
+    routing_table = {
+        HelloResponse: _serialize_hello_response,
+        AuthenticateSuccessResponse: _serialize_authenticate_response,
+        AuthenticateFailedResponse: _serialize_authenticate_failed_response,
+        GetResourceListResponse: _serialize_get_resource_list_response,
+        AllocateResourceSuccessResponse: _serialize_allocate_resource_success_response,
+        AllocateResourceFailureResponse: _serialize_allocate_resource_failure_response,
+    }
+
+    if msg_type in routing_table:
+        return routing_table[msg_type](msg)
     else:
         raise UnsupportedMessage()
 
@@ -142,6 +143,19 @@ def _serialize_allocate_resource_success_response(msg: AllocateResourceSuccessRe
 
     SubElement(resp, "resource-id").text = str(msg.resource_id)
     SubElement(resp, "protocol").text = msg.protocol
+
+    return root
+
+
+def _serialize_allocate_resource_failure_response(msg: AllocateResourceFailureResponse) -> Element:
+    root = _get_common_root()
+
+    resp = SubElement(root, "allocate-resource-resp")
+
+    result = SubElement(resp, "result")
+
+    SubElement(result, "result-id").text = msg.result_id
+    SubElement(result, "result-str").text = "Failed to allocate a session on the given resource 😢."
 
     return root
 

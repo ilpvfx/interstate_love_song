@@ -2,7 +2,6 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Sequence, Callable, Any
 
-
 from ._version import __version__
 
 
@@ -110,6 +109,11 @@ class AllocateResourceSuccessResponse(Message):
     connect_tag: str
     resource_id: int
     protocol: str = "PCOIP"
+
+
+@dataclass
+class AllocateResourceFailureResponse(Message):
+    result_id: str
 
 
 @dataclass

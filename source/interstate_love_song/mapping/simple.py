@@ -13,22 +13,22 @@ def hash_pass(s: str, salt="IGNORED"):
 
 
 class SimpleMapper(Mapper):
-    """A very simple mapper that accepts one set of credentials and returns a given set of hosts."""
+    """A very simple mapper that accepts one set of credentials and returns a given set of resources."""
 
-    def __init__(self, username: str, password_hash: str, hosts: Sequence[str]):
+    def __init__(self, username: str, password_hash: str, resources: Sequence[Resource]):
         """
 
         :param username:
             The username to accept.
         :param password_hash:
             A password hash, output from hash_pass.
-        :param hosts:
+        :param resources:
         :raises TypeError:
         """
         super().__init__()
         self._username = str(username)
         self._password_hash = str(password_hash)
-        self._hosts = list(str(host) for host in hosts)
+        self._resources = list(resources)
 
     @property
     def username(self) -> str:
@@ -39,8 +39,8 @@ class SimpleMapper(Mapper):
         return self._password_hash
 
     @property
-    def hosts(self) -> Sequence[str]:
-        return self._hosts
+    def resources(self) -> Sequence[Resource]:
+        return self._resources
 
     def map(self, credentials: Credentials, previous_host: Optional[str] = None) -> MapperResult:
         usr, psw = credentials
@@ -48,8 +48,8 @@ class SimpleMapper(Mapper):
             raise ValueError("username and password must be strings.")
 
         if usr == self.username and hash_pass(psw) == self._password_hash:
-            if self._hosts:
-                return MapperStatus.SUCCESS, [Resource(host, host) for host in self.hosts]
+            if self._resources:
+                return MapperStatus.SUCCESS, list(self.resources)
             else:
                 return MapperStatus.NO_MACHINE, []
         else:

@@ -2,13 +2,14 @@ import pytest
 import httpretty
 from xmldiff.main import diff_texts
 
-from interstate_love_song.agent import allocate_session
+from interstate_love_song.agent import allocate_session, AllocateSessionStatus
 
 
 @httpretty.activate
 def test_allocate_session_host_unreachable():
-    result = allocate_session(123, "127.255.255.255", username="Paul", password="Dirac")
+    status, result = allocate_session(123, "127.255.255.255", username="Paul", password="Dirac")
     assert result is None
+    assert status == AllocateSessionStatus.CONNECTION_ERROR
 
 
 @httpretty.activate
@@ -20,8 +21,9 @@ def test_allocate_session_host_404():
         status=404,
     )
 
-    result = allocate_session(123, "euler.edu", username="Paul", password="Dirac")
+    status, result = allocate_session(123, "euler.edu", username="Paul", password="Dirac")
     assert result is None
+    assert status == AllocateSessionStatus.ENDPOINT_ERROR
 
 
 @httpretty.activate
@@ -46,7 +48,7 @@ def test_allocate_session():
         """,
     )
 
-    result = allocate_session(
+    status, result = allocate_session(
         123,
         "euler.edu",
         username="Paul",
@@ -54,6 +56,8 @@ def test_allocate_session():
         client_name="WOPR",
         domain="bourbaki.org",
     )
+
+    assert status == AllocateSessionStatus.SUCCESSFUL
 
     assert result.ip_address == "1.1.1.1"
     assert result.sni == "SNI"
@@ -86,20 +90,55 @@ def test_allocate_session():
     assert len(diff_texts(expected_req, req.body)) == 0
 
 
+@httpretty.activate
 def test_allocate_session_user_auth_fail():
-    """<pcoip-agent version="1.0">
-  <launch-session-resp>
-    <result-id>FAILED_USER_AUTH</result-id>
-    <fail-reason>Failed to start the session due to user authentication failing.</fail-reason>
-  </launch-session-resp>
-</pcoip-agent>"""
+    httpretty.register_uri(
+        httpretty.POST,
+        "https://euler.edu:60443/pcoip-agent/xml",
+        status=200,
+        body="""<?xml version="1.0"?>
+        <pcoip-agent version="1.0">
+          <launch-session-resp>
+            <result-id>FAILED_USER_AUTH</result-id>
+            <fail-reason>Failed to start the session due to user authentication failing.</fail-reason>
+          </launch-session-resp>
+        </pcoip-agent>""",
+    )
+
+    status, result = allocate_session(
+        123,
+        "euler.edu",
+        username="Paul",
+        password="Dirac",
+        client_name="WOPR",
+        domain="bourbaki.org",
+    )
+
+    assert status == AllocateSessionStatus.FAILED_USER_AUTH
 
 
+@httpretty.activate
 def test_allocate_session_already_in_use():
-    """<pcoip-agent version="1.0">
-  <launch-session-resp>
-    <result-id>FAILED_ANOTHER_SESSION_STARTED</result-id>
-    <fail-reason>Failed to start the session due to there being an existing session for a different user.</fail-reason>
-  </launch-session-resp>
-</pcoip-agent>
-"""
+    httpretty.register_uri(
+        httpretty.POST,
+        "https://euler.edu:60443/pcoip-agent/xml",
+        status=200,
+        body="""<?xml version="1.0"?>
+            <pcoip-agent version="1.0">
+            <launch-session-resp>
+                <result-id>FAILED_ANOTHER_SESSION_STARTED</result-id>
+                <fail-reason>Failed to start the session due to there being an existing session for a different user.</fail-reason>
+              </launch-session-resp>
+            </pcoip-agent>""",
+    )
+
+    status, result = allocate_session(
+        123,
+        "euler.edu",
+        username="Paul",
+        password="Dirac",
+        client_name="WOPR",
+        domain="bourbaki.org",
+    )
+
+    assert status == AllocateSessionStatus.FAILED_ANOTHER_SESION_STARTED

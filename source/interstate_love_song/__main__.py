@@ -86,7 +86,7 @@ if __name__ == "__main__":
     simple_mapper = SimpleMapper(
         settings.simple_mapper.username,
         settings.simple_mapper.password_hash,
-        [res.hostname for res in settings.simple_mapper.resources],
+        list(settings.simple_mapper.resources),
     )
 
     wsgi = get_falcon_api(

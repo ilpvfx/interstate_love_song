@@ -4,6 +4,7 @@ from typing import Optional
 
 import pytest
 
+from interstate_love_song.agent import AgentSession, AllocateSessionStatus
 from interstate_love_song.mapping import Mapper, Credentials, MapperResult, MapperStatus, Resource
 from interstate_love_song.protocol import BrokerProtocolHandler, ProtocolState, ProtocolSession
 from interstate_love_song.transport import *
@@ -211,25 +212,107 @@ def test_broker_protocol_handler_call_waiting_for_getresourcelist_getresourcelis
     assert session_data.resources == resources
 
 
-def test_broker_protocol_handler_call_waiting_for_allocateresource_allocateresource(ctx: Fixture):
-    bph = BrokerProtocolHandler(ctx.mapper)
+def test_broker_protocol_handler_call_waiting_for_allocateresource_allocateresource_success(
+    ctx: Fixture,
+):
+    agent_session = AgentSession("kolmogorov", "kolmogorov.edu", 666, "Catmull", "Rom", "0")
 
-    session_data, response = bph(
-        AllocateResourceRequest(resource_id=1),
-        ProtocolSession("Leonhard", "Euler", state=ProtocolState.WAITING_FOR_ALLOCATERESOURCE),
+    def allocate_session(*args, **kwargs):
+        return AllocateSessionStatus.SUCCESSFUL, agent_session
+
+    protocol_session = ProtocolSession(
+        "Leonhard",
+        "Euler",
+        state=ProtocolState.WAITING_FOR_ALLOCATERESOURCE,
+        resources=[Resource("Hilbert", "hilbert.gov")],
     )
 
-    # TODO: test asking the Teradici machines for a session etc.
+    bph = BrokerProtocolHandler(ctx.mapper, allocate_session=allocate_session)
+
+    session_data, response = bph(AllocateResourceRequest(resource_id=0), protocol_session)
 
     assert isinstance(response, AllocateResourceSuccessResponse)
-    assert response.sni == "NO BUENO"
-    assert response.port == 666
-    assert response.session_id == "NO BUENO"
-    assert response.connect_tag == "NO BUENO"
+    assert response.sni == agent_session.sni
+    assert response.port == agent_session.port
+    assert response.session_id == agent_session.session_id
+    assert response.connect_tag == agent_session.session_tag
     assert response.protocol == "PCOIP"
 
     assert session_data is not None
     assert session_data.state == ProtocolState.WAITING_FOR_BYE
+
+
+def test_broker_protocol_handler_call_waiting_for_allocateresource_allocateresource_failure_to_connect(
+    ctx: Fixture,
+):
+    def allocate_session(*args, **kwargs):
+        return AllocateSessionStatus.CONNECTION_ERROR, None
+
+    protocol_session = ProtocolSession(
+        "Leonhard",
+        "Euler",
+        state=ProtocolState.WAITING_FOR_ALLOCATERESOURCE,
+        resources=[Resource("Hilbert", "hilbert.gov")],
+    )
+
+    bph = BrokerProtocolHandler(ctx.mapper, allocate_session=allocate_session)
+
+    session_data, response = bph(AllocateResourceRequest(resource_id=0), protocol_session)
+
+    assert isinstance(response, AllocateResourceFailureResponse)
+    # TODO: We should use the proper response here.
+    assert response.result_id == "FAILED_USER_AUTH"
+
+    assert session_data is not None
+    assert session_data.state == ProtocolState.WAITING_FOR_ALLOCATERESOURCE
+
+
+def test_broker_protocol_handler_call_waiting_for_allocateresource_allocateresource_failure_to_auth(
+    ctx: Fixture,
+):
+    def allocate_session(*args, **kwargs):
+        return AllocateSessionStatus.FAILED_USER_AUTH, None
+
+    protocol_session = ProtocolSession(
+        "Leonhard",
+        "Euler",
+        state=ProtocolState.WAITING_FOR_ALLOCATERESOURCE,
+        resources=[Resource("Hilbert", "hilbert.gov")],
+    )
+
+    bph = BrokerProtocolHandler(ctx.mapper, allocate_session=allocate_session)
+
+    session_data, response = bph(AllocateResourceRequest(resource_id=0), protocol_session)
+
+    assert isinstance(response, AllocateResourceFailureResponse)
+    assert response.result_id == "FAILED_USER_AUTH"
+
+    assert session_data is not None
+    assert session_data.state == ProtocolState.WAITING_FOR_ALLOCATERESOURCE
+
+
+def test_broker_protocol_handler_call_waiting_for_allocateresource_allocateresource_session_in_use(
+    ctx: Fixture,
+):
+    def allocate_session(*args, **kwargs):
+        return AllocateSessionStatus.FAILED_ANOTHER_SESION_STARTED, None
+
+    protocol_session = ProtocolSession(
+        "Leonhard",
+        "Euler",
+        state=ProtocolState.WAITING_FOR_ALLOCATERESOURCE,
+        resources=[Resource("Hilbert", "hilbert.gov")],
+    )
+
+    bph = BrokerProtocolHandler(ctx.mapper, allocate_session=allocate_session)
+
+    session_data, response = bph(AllocateResourceRequest(resource_id=0), protocol_session)
+
+    assert isinstance(response, AllocateResourceFailureResponse)
+    assert response.result_id == "FAILED_ANOTHER_SESION_STARTED"
+
+    assert session_data is not None
+    assert session_data.state == ProtocolState.WAITING_FOR_ALLOCATERESOURCE
 
 
 def test_broker_protocol_handler_call_waiting_for_bye_bye(ctx: Fixture):

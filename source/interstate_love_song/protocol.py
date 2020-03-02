@@ -4,6 +4,7 @@ from enum import Enum
 from typing import Sequence, Any, Tuple, Optional, Callable
 
 from interstate_love_song import agent
+from interstate_love_song.agent import AllocateSessionStatus
 from interstate_love_song.mapping import Mapper, Resource, MapperStatus
 from interstate_love_song.transport import (
     Message,
@@ -19,6 +20,7 @@ from interstate_love_song.transport import (
     ByeResponse,
     TeradiciResource,
     AuthenticateFailedResponse,
+    AllocateResourceFailureResponse,
 )
 from interstate_love_song._version import __version__
 
@@ -69,7 +71,7 @@ class BrokerProtocolHandler:
         - the mapper may not be deterministic.
     """
 
-    def __init__(self, mapper: Mapper):
+    def __init__(self, mapper: Mapper, allocate_session=agent.allocate_session):
         """
         :param mapper:
             A mapper to use for authentication and resource assignment.
@@ -77,8 +79,10 @@ class BrokerProtocolHandler:
         """
         if not isinstance(mapper, Mapper):
             raise ValueError("Expected a Mapper instance.")
+        if not callable(allocate_session):
+            raise ValueError("Expected allocate_session to be a callable.")
         self._mapper = mapper
-        self._allocate_session = agent.allocate_session
+        self._allocate_session = allocate_session
 
     @property
     def mapper(self) -> Mapper:
@@ -196,25 +200,31 @@ class BrokerProtocolHandler:
         """
         _assert_session_exist(session)
 
-        session.state = ProtocolState.WAITING_FOR_BYE
-
         hostname = session.resources[msg.resource_id].hostname
-        agent_session = self._allocate_session(
+        status, agent_session = self._allocate_session(
             msg.resource_id, hostname, session.username, session.password
         )
 
-        return (
-            session,
-            AllocateResourceSuccessResponse(
-                ip_address=agent_session.ip_address,
-                hostname=hostname,
-                sni=agent_session.sni,
-                port=agent_session.port,
-                session_id=agent_session.session_id,
-                connect_tag=agent_session.session_tag,
-                resource_id=int(agent_session.resource_id),
-            ),
-        )
+        if status == AllocateSessionStatus.SUCCESSFUL:
+            session.state = ProtocolState.WAITING_FOR_BYE
+
+            return (
+                session,
+                AllocateResourceSuccessResponse(
+                    ip_address=agent_session.ip_address,
+                    hostname=hostname,
+                    sni=agent_session.sni,
+                    port=agent_session.port,
+                    session_id=agent_session.session_id,
+                    connect_tag=agent_session.session_tag,
+                    resource_id=int(agent_session.resource_id),
+                ),
+            )
+        else:
+            result_id = "FAILED_USER_AUTH"
+            if status == AllocateSessionStatus.FAILED_ANOTHER_SESION_STARTED:
+                result_id = "FAILED_ANOTHER_SESION_STARTED"
+            return session, AllocateResourceFailureResponse(result_id=result_id)
 
     def _bye(self, msg: ByeRequest, session: Optional[ProtocolSession]) -> ProtocolAction:
         return None, ByeResponse()
