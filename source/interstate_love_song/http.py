@@ -117,12 +117,11 @@ class BrokerResource:
 
         try:
             xml_str = req.bounded_stream.read()
-            logger.info("Got XML: %s", str(xml_str))
             xml = fromstring(xml_str)
 
             in_msg = self._deserialize(xml)
 
-            logger.info("Received POST: Message: %s.", str(in_msg))
+            logger.debug("Received POST: Message: %s.", str(in_msg))
 
             new_session_data, out_msg = protocol(in_msg, session_setter.get_data())
             session_setter.set_data(new_session_data)
@@ -145,7 +144,7 @@ class BrokerResource:
 
             resp.content_type = falcon.MEDIA_XML
 
-            logger.info("Responded with %s.", str(out_msg))
+            logger.debug("Responded with %s.", str(out_msg))
         except SyntaxError as e:
             raise falcon.HTTPBadRequest(description="Malformed XML.")
 
