@@ -106,6 +106,10 @@ class BrokerProtocolHandler:
 
         msg_type = type(msg)
 
+        # treat bye as a general abort
+        if msg_type is ByeRequest:
+            return None, ByeResponse()
+
         routing_table = {
             ProtocolState.WAITING_FOR_HELLO: (HelloRequest, self._hello),
             ProtocolState.WAITING_FOR_AUTHENTICATE: (AuthenticateRequest, self._authenticate),
@@ -117,7 +121,6 @@ class BrokerProtocolHandler:
                 AllocateResourceRequest,
                 self._allocate_resource,
             ),
-            ProtocolState.WAITING_FOR_BYE: (ByeRequest, self._bye),
         }
 
         state = ProtocolState.WAITING_FOR_HELLO if session is None else session.state
@@ -225,6 +228,3 @@ class BrokerProtocolHandler:
             if status == AllocateSessionStatus.FAILED_ANOTHER_SESION_STARTED:
                 result_id = "FAILED_ANOTHER_SESION_STARTED"
             return session, AllocateResourceFailureResponse(result_id=result_id)
-
-    def _bye(self, msg: ByeRequest, session: Optional[ProtocolSession]) -> ProtocolAction:
-        return None, ByeResponse()

@@ -86,6 +86,17 @@ def test_broker_protocol_handler_call_waiting_for_hello_hello_query_broker_clien
     assert session_data is None
 
 
+def test_broker_protocol_handler_call_waiting_for_hello_bye(ctx: Fixture):
+    bph = BrokerProtocolHandler(ctx.mapper)
+    session_data, response = bph(
+        ByeRequest(), ProtocolSession(state=ProtocolState.WAITING_FOR_HELLO)
+    )
+
+    assert isinstance(response, ByeResponse)
+
+    assert session_data is None
+
+
 def test_broker_protocol_handler_call_waiting_for_hello_other_message(ctx: Fixture):
     bph = BrokerProtocolHandler(ctx.mapper)
 
@@ -168,6 +179,17 @@ def test_broker_protocol_handler_call_waiting_for_authenticate_authenticate_fail
     assert list(session_data.resources) == []
 
     assert ctx.mapper.map_called is True
+
+
+def test_broker_protocol_handler_call_waiting_for_authenticate_bye(ctx: Fixture):
+    bph = BrokerProtocolHandler(ctx.mapper)
+    session_data, response = bph(
+        ByeRequest(), ProtocolSession(state=ProtocolState.WAITING_FOR_AUTHENTICATE)
+    )
+
+    assert isinstance(response, ByeResponse)
+
+    assert session_data is None
 
 
 def test_broker_protocol_handler_call_waiting_for_authenticate_other_message(ctx: Fixture):
