@@ -13,6 +13,8 @@ from falcon import API
 from falcon_middleware_beaker import BeakerSessionMiddleware
 from beaker.session import SessionObject
 
+
+from ._version import VERSION
 from .mapping import Mapper
 from .protocol import (
     ProtocolState,
@@ -24,7 +26,7 @@ from .protocol import (
 from .serialization import serialize_message, deserialize_message, HelloRequest
 from .settings import Settings
 
-ProtocolCreator = Callable[[Mapper], ProtocolHandler]
+ProtocolCreator = Callable[[], ProtocolHandler]
 
 logger = logging.getLogger(__name__)
 
@@ -147,6 +149,27 @@ class BrokerResource:
             logger.debug("Responded with %s.", str(out_msg))
         except SyntaxError as e:
             raise falcon.HTTPBadRequest(description="Malformed XML.")
+
+    def on_get(self, req, resp):
+        data = """
+        <html>
+        <head><title>Interstate Love Song</title></head>
+        <body>
+            <div style="position: absolute; left: calc(50vw - 150px);">
+                <img src="data:image/jpeg;base64,{hacker_base64}" />
+                <p>
+                    v{version}
+                </p>
+            </div>
+        </body>
+        </html> 
+        """.format(
+            hacker_base64=static.hacker_img, version=VERSION
+        )
+
+        resp.content_type = falcon.MEDIA_HTML
+
+        resp.body = data
 
 
 class FallbackSessionMiddleware(BeakerSessionMiddleware):
