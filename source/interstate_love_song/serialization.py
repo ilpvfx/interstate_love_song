@@ -31,6 +31,7 @@ def serialize_message(msg: Message) -> Element:
         GetResourceListResponse: _serialize_get_resource_list_response,
         AllocateResourceSuccessResponse: _serialize_allocate_resource_success_response,
         AllocateResourceFailureResponse: _serialize_allocate_resource_failure_response,
+        ByeResponse: _serialize_bye_response,
     }
 
     if msg_type in routing_table:
@@ -156,6 +157,14 @@ def _serialize_allocate_resource_failure_response(msg: AllocateResourceFailureRe
 
     SubElement(result, "result-id").text = msg.result_id
     SubElement(result, "result-str").text = "Failed to allocate a session on the given resource 😢."
+
+    return root
+
+
+def _serialize_bye_response(msg: ByeResponse) -> Element:
+    root = _get_common_root()
+
+    resp = SubElement(root, "bye-resp")
 
     return root
 

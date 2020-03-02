@@ -183,6 +183,21 @@ def test_serialize_message_allocate_resource_failure_response():
     assert xml_tree_equal_to_xml_string(xml_et, expected)
 
 
+def test_serialize_message_bye_response():
+    msg = ByeResponse()
+    expected = """<?xml version="1.0"?>
+    <pcoip-client version="2.1">
+        <bye-resp />
+    </pcoip-client>
+    """.format(
+        msg=msg
+    )
+
+    xml_et = serialize_message(msg)
+
+    assert xml_tree_equal_to_xml_string(xml_et, expected)
+
+
 def test_deserialize_message_bad_input():
     with pytest.raises(ValueError):
         deserialize_message(123)
