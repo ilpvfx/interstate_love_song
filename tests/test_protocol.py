@@ -317,7 +317,7 @@ def test_broker_protocol_handler_call_waiting_for_allocateresource_allocateresou
     ctx: Fixture,
 ):
     def allocate_session(*args, **kwargs):
-        return AllocateSessionStatus.FAILED_ANOTHER_SESION_STARTED, None
+        return AllocateSessionStatus.FAILED_ANOTHER_SESSION_STARTED, None
 
     protocol_session = ProtocolSession(
         "Leonhard",

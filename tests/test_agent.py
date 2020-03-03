@@ -141,4 +141,4 @@ def test_allocate_session_already_in_use():
         domain="bourbaki.org",
     )
 
-    assert status == AllocateSessionStatus.FAILED_ANOTHER_SESION_STARTED
+    assert status == AllocateSessionStatus.FAILED_ANOTHER_SESSION_STARTED

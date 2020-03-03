@@ -224,6 +224,6 @@ class BrokerProtocolHandler:
             )
         else:
             result_id = "FAILED_USER_AUTH"
-            if status == AllocateSessionStatus.FAILED_ANOTHER_SESION_STARTED:
+            if status == AllocateSessionStatus.FAILED_ANOTHER_SESSION_STARTED:
                 result_id = "FAILED_ANOTHER_SESION_STARTED"
             return session, AllocateResourceFailureResponse(result_id=result_id)

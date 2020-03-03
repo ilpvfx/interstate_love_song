@@ -15,7 +15,7 @@ class AllocateSessionStatus(Enum):
     # Protocol status
     SUCCESSFUL = 0
     FAILED_USER_AUTH = 1
-    FAILED_ANOTHER_SESION_STARTED = 2
+    FAILED_ANOTHER_SESSION_STARTED = 2
     # Library status
     CONNECTION_ERROR = 100
     XML_ERROR = 101
@@ -105,7 +105,7 @@ def allocate_session(
         elif result_id.text.lower() == "failed_user_auth":
             return AllocateSessionStatus.FAILED_USER_AUTH, None
         elif result_id.text.lower() == "failed_another_session_started":
-            return AllocateSessionStatus.FAILED_ANOTHER_SESION_STARTED, None
+            return AllocateSessionStatus.FAILED_ANOTHER_SESSION_STARTED, None
         else:
             logger.warning("Unknown result-id: %s", result_id.text)
             return AllocateSessionStatus.XML_ERROR, None
