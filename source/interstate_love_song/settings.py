@@ -114,10 +114,15 @@ class SimpleMapperSettings:
     resources: Sequence[Resource] = dataclasses.field(default_factory=lambda: [])
 
 
+class MapperToUse(Enum):
+    SIMPLE = "SIMPLE"
+
+
 @dataclass()
 class Settings:
     """Holds the settings. Fields with a default may be omitted in the config."""
 
+    mapper: MapperToUse = MapperToUse.SIMPLE
     logging: LoggingSettings = LoggingSettings()
     beaker: BeakerSettings = BeakerSettings()
     simple_mapper: SimpleMapperSettings = SimpleMapperSettings()
@@ -131,6 +136,7 @@ class Settings:
 def load_settings_json(json_str: str) -> Settings:
     """Loads the settings from a JSON string. The JSON should be structured as follows:
         {
+            "mapper": ?,
             "beaker": {"type": ?, "data_dir": ?},
             "logging": {"level": ?},
             "simple_mapper" : {"username": ?, "password_hash": ?, "resources": [?, ...?]}

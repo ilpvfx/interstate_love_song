@@ -1,10 +1,13 @@
 import argparse
 import logging
+import sys
 
 from interstate_love_song._version import VERSION
 from interstate_love_song.mapping import SimpleMapper
 from .http import get_falcon_api, BrokerResource, standard_protocol_creator
-from .settings import Settings, load_settings_json
+from .settings import Settings, load_settings_json, MapperToUse
+
+logger = logging.getLogger(__name__)
 
 
 def gunicorn_runner(wsgi, host, port, cert, key, worker_class="gevent", workers=2):
@@ -40,6 +43,7 @@ def gunicorn_runner(wsgi, host, port, cert, key, worker_class="gevent", workers=
         "workers": workers,
     }
 
+    logger.info("Running gunicorn.")
     _GunicornApp(wsgi, options).run()
 
 
@@ -47,6 +51,7 @@ def werkzeug_runner(wsgi, host, port, cert, key):
     """Doesn't seem to send chunked responses properly, and so won't work with PCOIP-clients it seems."""
     from werkzeug.serving import run_simple
 
+    logger.info("Running werkzeug.")
     run_simple(host, port, wsgi, ssl_context=(cert, key))
 
 
@@ -59,6 +64,8 @@ def cherrypy_runner(wsgi, host, port, cert, key):
     cherrypy.server.ssl_certificate = cert
     cherrypy.server.ssl_private_key = key
     cherrypy.server.bind_addr = (host, port)
+
+    logger.info("Running cherrypy.")
 
     cherrypy.engine.start()
     cherrypy.engine.block()
@@ -83,11 +90,10 @@ def print_logo():
         VERSION
     )
     print(data)
+    sys.stdout.flush()
 
 
 if __name__ == "__main__":
-    print_logo()
-
     argparser = argparse.ArgumentParser("interstate_love_song")
     argparser.add_argument(
         "-s", "--server", choices=["werkzeug", "gunicorn", "cherrypy"], default="gunicorn"
@@ -106,22 +112,38 @@ if __name__ == "__main__":
     argparser.add_argument(
         "--gunicorn-workers", default=2, type=int, help="only matters if -s gunicorn."
     )
+    argparser.add_argument("--no-splash", action="store_true")
 
     args = argparser.parse_args()
+
+    if not args.no_splash:
+        print_logo()
+    else:
+        logger.info("Version %s", VERSION)
+
+    logging.basicConfig(level=logging.INFO)
 
     settings = Settings()
     if args.config:
         with open(args.config, "r") as f:
             settings = load_settings_json(f.read())
 
-    simple_mapper = SimpleMapper(
-        settings.simple_mapper.username,
-        settings.simple_mapper.password_hash,
-        list(settings.simple_mapper.resources),
-    )
+    mapper = None
+    if settings.mapper == MapperToUse.SIMPLE:
+        mapper = SimpleMapper(
+            settings.simple_mapper.username,
+            settings.simple_mapper.password_hash,
+            list(settings.simple_mapper.resources),
+        )
+    else:
+        logger.critical("Unknown mapper %s", settings.mapper)
+
+    logger.info("Server %s, bound to %s:%s", args.server, args.host, args.port)
+    logger.info("Mapper: %s;", mapper.name)
+    logger.info("SSL; cert: %s; pkey: %s;", args.cert, args.key)
 
     wsgi = get_falcon_api(
-        BrokerResource(standard_protocol_creator(simple_mapper)),
+        BrokerResource(standard_protocol_creator(mapper)),
         settings,
         use_fallback_sessions=args.fallback_sessions,
     )
@@ -140,3 +162,5 @@ if __name__ == "__main__":
         )
     elif args.server == "cherrypy":
         cherrypy_runner(wsgi, args.host, args.port, args.cert, args.key)
+    else:
+        logger.critical("Unknown server type %s", args.server)

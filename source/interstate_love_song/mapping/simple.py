@@ -55,6 +55,10 @@ class SimpleMapper(Mapper):
         else:
             return MapperStatus.AUTHENTICATION_FAILED, []
 
+    @property
+    def name(self):
+        return "SimpleMapper"
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("hasher")

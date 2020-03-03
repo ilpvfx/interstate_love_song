@@ -9,6 +9,7 @@ import pytest
 from argparse import Namespace
 
 from interstate_love_song.mapping import Resource
+from interstate_love_song.settings import MapperToUse
 
 
 @dataclass
@@ -140,6 +141,7 @@ def test_load_settings_json():
 
     raw_settings_json = """
     {{
+        "mapper": "SIMPLE",
         "logging": {{
             "level": "{logging.level}"
         }},
@@ -161,6 +163,8 @@ def test_load_settings_json():
     )
 
     result = settings.load_settings_json(raw_settings_json)
+
+    assert result.mapper == MapperToUse.SIMPLE
 
     assert isinstance(result.logging, settings.LoggingSettings)
     assert result.logging.level == settings.LoggingLevel.INFO

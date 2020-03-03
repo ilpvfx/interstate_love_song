@@ -44,3 +44,9 @@ class Mapper(ABC):
             a tuple of a MapperStatus and a sequence, the sequence shall be empty unless the status is SUCCESS.
         """
         pass
+
+    @property
+    @abstractmethod
+    def name(self):
+        """The name of this mapper."""
+        pass
