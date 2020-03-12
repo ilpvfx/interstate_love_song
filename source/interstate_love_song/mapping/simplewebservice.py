@@ -91,16 +91,16 @@ class SimpleWebserviceMapper(Mapper):
         headers = {"Authorization": "Basic {}".format(_b64password(username, password))}
 
         try:
-            response = requests.get(
-                urljoin(self._base_url, "/user={}".format(username)), headers=headers
-            )
+            url = self._base_url + "/user={}".format(username)
+            response = requests.get(url, headers=headers)
 
             if response.status_code == 403:
                 return MapperStatus.AUTHENTICATION_FAILED, []
             elif response.status_code != 200:
                 logger.error(
-                    "The mapping webservice returned code %d, which is unsupported.",
+                    "The mapping webservice returned code %d, which is unsupported. The URL was %s",
                     response.status_code,
+                    url,
                 )
                 return MapperStatus.INTERNAL_ERROR, []
 
