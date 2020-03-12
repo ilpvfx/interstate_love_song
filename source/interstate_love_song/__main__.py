@@ -4,6 +4,7 @@ import sys
 
 from interstate_love_song._version import VERSION
 from interstate_love_song.mapping import SimpleMapper
+from interstate_love_song.mapping.simplewebservice import SimpleWebserviceMapper
 from .http import get_falcon_api, BrokerResource, standard_protocol_creator
 from .settings import Settings, load_settings_json, MapperToUse
 
@@ -135,6 +136,8 @@ if __name__ == "__main__":
             settings.simple_mapper.password_hash,
             list(settings.simple_mapper.resources),
         )
+    elif settings.mapper == MapperToUse.SIMPLE_WEBSERVICE:
+        mapper = SimpleWebserviceMapper(settings.simple_webservice_mapper.base_url)
     else:
         logger.critical("Unknown mapper %s", settings.mapper)
 
