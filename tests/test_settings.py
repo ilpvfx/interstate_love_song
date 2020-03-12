@@ -139,6 +139,8 @@ def test_load_settings_json():
         resource_hostname="kurt.godel.edu",
     )
 
+    simple_webservice_mapper = Namespace(base_url="Kurt",)
+
     raw_settings_json = """
     {{
         "mapper": "SIMPLE",
@@ -155,11 +157,15 @@ def test_load_settings_json():
                 "name": "{simple_mapper.resource_name}",
                 "hostname": "{simple_mapper.resource_hostname}"
             }}]
-        }}
+        }},
+        "simple_webservice_mapper": {{"base_url": "{simple_webservice_mapper.base_url}"}}
 
     }}
     """.format(
-        logging=logging, beaker=beaker, simple_mapper=simple_mapper
+        logging=logging,
+        beaker=beaker,
+        simple_mapper=simple_mapper,
+        simple_webservice_mapper=simple_webservice_mapper,
     )
 
     result = settings.load_settings_json(raw_settings_json)
@@ -179,6 +185,9 @@ def test_load_settings_json():
     assert result.simple_mapper.resources == [
         Resource(simple_mapper.resource_name, simple_mapper.resource_hostname)
     ]
+
+    assert isinstance(result.simple_webservice_mapper, settings.SimpleWebserviceMapperSettings)
+    assert result.simple_webservice_mapper.base_url == simple_webservice_mapper.base_url
 
 
 def test_load_settings_json_missing_database():

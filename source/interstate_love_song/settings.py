@@ -114,8 +114,14 @@ class SimpleMapperSettings:
     resources: Sequence[Resource] = dataclasses.field(default_factory=lambda: [])
 
 
+@dataclass
+class SimpleWebserviceMapperSettings:
+    base_url: str = "changeme"
+
+
 class MapperToUse(Enum):
     SIMPLE = "SIMPLE"
+    SIMPLE_WEBSERVICE = "SIMPLE_WEBSERVICE"
 
 
 @dataclass()
@@ -126,6 +132,7 @@ class Settings:
     logging: LoggingSettings = LoggingSettings()
     beaker: BeakerSettings = BeakerSettings()
     simple_mapper: SimpleMapperSettings = SimpleMapperSettings()
+    simple_webservice_mapper: SimpleWebserviceMapperSettings = SimpleWebserviceMapperSettings()
 
     @classmethod
     def load_dict(cls, data: Mapping[str, Any]):
@@ -139,7 +146,8 @@ def load_settings_json(json_str: str) -> Settings:
             "mapper": ?,
             "beaker": {"type": ?, "data_dir": ?},
             "logging": {"level": ?},
-            "simple_mapper" : {"username": ?, "password_hash": ?, "resources": [?, ...?]}
+            "simple_mapper" : {"username": ?, "password_hash": ?, "resources": [?, ...?]},
+            "simple_webservice_mapper": {"base_url": ?}
         }
     """
     data = json.loads(json_str)
