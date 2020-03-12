@@ -11,6 +11,10 @@ from interstate_love_song.transport import *
 
 
 class DummyMapper(Mapper):
+    @property
+    def name(self):
+        return "DummyMapper"
+
     def __init__(self, username="test", password="test", resources=[]):
         super().__init__()
         self.username = username
