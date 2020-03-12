@@ -1,8 +1,9 @@
 import base64
+import json
 import logging
+from json import JSONDecodeError
 
 import requests
-import simplejson
 
 from .base import *
 
@@ -101,13 +102,15 @@ class SimpleWebserviceMapper(Mapper):
                 )
                 return MapperStatus.INTERNAL_ERROR, []
 
-            data = response.json()
+            data = json.loads(
+                response.text
+            )  # use json instead of response.json() because it throws a weird exception.
 
             return _process_json(data)
         except requests.exceptions.ConnectionError:
             logger.error("Could not connect to the mapping webservice.")
             return MapperStatus.INTERNAL_ERROR, []
-        except simplejson.errors.JSONDecodeError:
+        except JSONDecodeError:
             logger.error("Could not decode JSON from the mapping webservice.")
             return MapperStatus.INTERNAL_ERROR, []
 
