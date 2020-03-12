@@ -66,7 +66,7 @@ class SimpleWebserviceMapper(Mapper):
     The webservice shall accept HTTP Basic authentication.
     """
 
-    def __init__(self, base_url: str, use_query_parameter=True):
+    def __init__(self, base_url: str, use_query_parameter=False):
         """
         :param base_url: The path to the endpoint.
         :param use_query_parameter: Whether to use "/user=<username>" or "?user=<username>".
@@ -80,6 +80,8 @@ class SimpleWebserviceMapper(Mapper):
         if not isinstance(use_query_parameter, bool):
             raise ValueError("use_query_parameter must be a bool.")
         self._use_query_parameter = use_query_parameter
+        if self._use_query_parameter:
+            raise NotImplementedError()
 
     def map(self, credentials: Credentials, previous_host: Optional[str] = None) -> MapperResult:
         username, password = credentials
