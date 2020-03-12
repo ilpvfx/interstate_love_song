@@ -107,6 +107,10 @@ For example:
 }
 ```
 
+### simple_webservice_mapper
+
+`base_url`: str; the url to the endpoint of the service, should preferably not end in "/".
+
 ## Mappers
 Mappers assign resources to users; in plain english, they decide which Teradici machines, if any, to present to a 
 connecting client.
@@ -128,6 +132,30 @@ To generate a hashed password, simply call:
 python -m interstate_love_song.mapping.simple "a very long password"
 ```
 
+### SimpleWebserviceMapper
+The SimpleWebserviceMapper was devised in a hurry during the latest pandemic. It calls another webservice and uses that 
+as the mapper.
+
+It works with any endpoint that fulfills the following requirements:
+
+The webservice must have an endpoint that either accepts the path "user=<username>" or the query param
+    "user=<username>".
+
+The webservice shall return UTF-8 JSON of the following format:
+
+    {
+      "hosts": [
+        {
+            name: "Bilbo Baggins",
+            hostname: "jrr.tolkien.com",
+        },
+        {
+            name: "Winston Smith",
+            hostname: "orwell.mil",
+        }
+    }
+
+The webservice shall accept HTTP Basic authentication.
 
 ## Requirements
 
