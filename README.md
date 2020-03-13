@@ -111,11 +111,17 @@ For example:
 
 `base_url`: str; the url to the endpoint of the service, should preferably not end in "/".
 
+### Root properties
+
+`mapper`: str; one of the values given in the following section (`SIMPLE`)
+
 ## Mappers
 Mappers assign resources to users; in plain english, they decide which Teradici machines, if any, to present to a 
 connecting client.
 
 ### SimpleMapper
+
+`SIMPLE`
 
 The Simple Mapper is, indeed simple. It authenticates only one, common, user. It returns a given set of resources for
 this user, with no special logic.
@@ -133,29 +139,47 @@ python -m interstate_love_song.mapping.simple "a very long password"
 ```
 
 ### SimpleWebserviceMapper
+
+`SIMPLE_WEBSERVICE`
+
 The SimpleWebserviceMapper was devised in a hurry during the latest pandemic. It calls another webservice and uses that 
 as the mapper.
 
 It works with any endpoint that fulfills the following requirements:
 
-The webservice must have an endpoint that either accepts the path "user=<username>" or the query param
+- The webservice must have an endpoint that either accepts the path "user=<username>" or the query param
     "user=<username>".
 
-The webservice shall return UTF-8 JSON of the following format:
+- The webservice shall return UTF-8 JSON of the following format:
 
+```json
     {
       "hosts": [
-        {
-            name: "Bilbo Baggins",
-            hostname: "jrr.tolkien.com",
-        },
-        {
-            name: "Winston Smith",
-            hostname: "orwell.mil",
-        }
+            {
+                name: "Bilbo Baggins",
+                hostname: "jrr.tolkien.com",
+            },
+            {
+                name: "Winston Smith",
+                hostname: "orwell.mil",
+            }
+        ]
     }
+```    
 
-The webservice shall accept HTTP Basic authentication.
+- The webservice shall accept HTTP Basic authentication.
+
+- If authentication fails, it should return Status 403.
+
+- If everything works, Status 200. "No resources" should be indicated with an empty hosts list.
+
+- Any other status codes (except redirects) are deemed as internal errors.
+
+Thus if the `base_url` is `http://oh.my.god.covid19.com`, then it will do `GET` requests to 
+`http://oh.my.god.covid19.com/user=<username>`, with a `Authorization: Basic <b64>` header.
+
+The resources returned are presented to the PCOIP-client.
+
 
 ## Requirements
 
