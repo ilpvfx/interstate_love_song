@@ -156,12 +156,12 @@ It works with any endpoint that fulfills the following requirements:
     {
       "hosts": [
             {
-                name: "Bilbo Baggins",
-                hostname: "jrr.tolkien.com",
+                "name": "Bilbo Baggins",
+                "hostname": "jrr.tolkien.com",
             },
             {
-                name: "Winston Smith",
-                hostname: "orwell.mil",
+                "name": "Winston Smith",
+                "hostname": "orwell.mil",
             }
         ]
     }
