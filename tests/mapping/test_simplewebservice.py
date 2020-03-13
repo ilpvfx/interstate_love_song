@@ -13,12 +13,41 @@ from interstate_love_song.mapping.simplewebservice import (
 
 def test_simple_webservice_mapper_constructor_bad_arguments():
     with pytest.raises(ValueError):
-        SimpleWebserviceMapper(None)
+        SimpleWebserviceMapper(None, "http://blah.com", "das_cookie")
     with pytest.raises(ValueError):
-        SimpleWebserviceMapper("http://blah.com", use_query_parameter="123")
+        SimpleWebserviceMapper(
+            "http://blah.com", "http://blah.com", "das_cookie", use_query_parameter="123"
+        )
+    with pytest.raises(ValueError):
+        SimpleWebserviceMapper("http://blah.com", "http://blah.com", None)
+    with pytest.raises(ValueError):
+        SimpleWebserviceMapper("http://blah.com", None, "das_cookie")
 
 
 TEST_BASE_URL = "http://orwell.mil"
+TEST_COOKIE_AUTH_URL = "http://auth.orwell.mil"
+TEST_COOKIE_NAME = "das_cookie"
+TEST_COOKIE_VALUE = "BernhardRiemann"
+
+
+def httpretty_register_auth(status=200):
+    headers = {"Set-Cookie": "{}={}".format(TEST_COOKIE_NAME, TEST_COOKIE_VALUE)}
+
+    httpretty.register_uri(
+        httpretty.GET,
+        TEST_COOKIE_AUTH_URL,
+        body="Game over man, game over",
+        status=status,
+        **headers,
+    )
+
+
+def httpretty_assert_cookie_passed():
+    latest = httpretty.last_request()
+
+    headers = dict(latest.headers)
+    assert "Cookie" in headers
+    assert headers["Cookie"] == "{}={}".format(TEST_COOKIE_NAME, TEST_COOKIE_VALUE)
 
 
 @dataclass
@@ -28,7 +57,7 @@ class Fixture:
 
 @pytest.fixture
 def ctx() -> Fixture:
-    return Fixture(SimpleWebserviceMapper(TEST_BASE_URL))
+    return Fixture(SimpleWebserviceMapper(TEST_BASE_URL, TEST_COOKIE_AUTH_URL, TEST_COOKIE_NAME))
 
 
 @httpretty.activate
@@ -37,10 +66,7 @@ def test_simple_webservice_mapper_webservice_receives_auth(ctx: Fixture):
     password = "Leonhard"
 
     httpretty.register_uri(
-        httpretty.GET,
-        "{}/user={}".format(TEST_BASE_URL, username),
-        body="Not found, my man!",
-        status=404,
+        httpretty.GET, TEST_COOKIE_AUTH_URL, body="Not found, my man!", status=404
     )
 
     ctx.mapper.map((username, password))
@@ -75,6 +101,8 @@ def test_simple_webservice_mapper_webservice_returns_not_200(ctx: Fixture):
     username = "Euler"
     password = "Leonhard"
 
+    httpretty_register_auth()
+
     httpretty.register_uri(
         httpretty.GET,
         "{}/user={}".format(TEST_BASE_URL, username),
@@ -83,6 +111,8 @@ def test_simple_webservice_mapper_webservice_returns_not_200(ctx: Fixture):
     )
 
     status, resources = ctx.mapper.map((username, password))
+
+    httpretty_assert_cookie_passed()
 
     assert status == MapperStatus.INTERNAL_ERROR
     assert list(resources) == []
@@ -93,11 +123,15 @@ def test_simple_webservice_mapper_webservice_returns_bad_json(ctx: Fixture):
     username = "Euler"
     password = "Leonhard"
 
+    httpretty_register_auth()
+
     httpretty.register_uri(
         httpretty.GET, "{}/user={}".format(TEST_BASE_URL, username), body="{}}", status=200
     )
 
     status, resources = ctx.mapper.map((username, password))
+
+    httpretty_assert_cookie_passed()
 
     assert status == MapperStatus.INTERNAL_ERROR
     assert list(resources) == []
@@ -107,6 +141,8 @@ def test_simple_webservice_mapper_webservice_returns_bad_json(ctx: Fixture):
 def test_simple_webservice_mapper_webservice_returns_bad_json_missing_name(ctx: Fixture):
     username = "Euler"
     password = "Leonhard"
+
+    httpretty_register_auth()
 
     machine_name1 = "A Machine"
     machine_hostname1 = "asimov.robotics.xyz"
@@ -128,6 +164,8 @@ def test_simple_webservice_mapper_webservice_returns_bad_json_missing_name(ctx: 
 
     status, resources = ctx.mapper.map((username, password))
 
+    httpretty_assert_cookie_passed()
+
     assert status == MapperStatus.INTERNAL_ERROR
     assert list(resources) == []
 
@@ -136,6 +174,8 @@ def test_simple_webservice_mapper_webservice_returns_bad_json_missing_name(ctx: 
 def test_simple_webservice_mapper_webservice_returns_bad_json_missing_hostname(ctx: Fixture):
     username = "Euler"
     password = "Leonhard"
+
+    httpretty_register_auth()
 
     machine_name1 = "A Machine"
     machine_hostname1 = "asimov.robotics.xyz"
@@ -157,6 +197,8 @@ def test_simple_webservice_mapper_webservice_returns_bad_json_missing_hostname(c
 
     status, resources = ctx.mapper.map((username, password))
 
+    httpretty_assert_cookie_passed()
+
     assert status == MapperStatus.INTERNAL_ERROR
     assert list(resources) == []
 
@@ -165,6 +207,8 @@ def test_simple_webservice_mapper_webservice_returns_bad_json_missing_hostname(c
 def test_simple_webservice_mapper_webservice_returns_bad_json_hosts_not_iterable(ctx: Fixture):
     username = "Euler"
     password = "Leonhard"
+
+    httpretty_register_auth()
 
     machine_name1 = "A Machine"
     machine_hostname1 = "asimov.robotics.xyz"
@@ -177,6 +221,8 @@ def test_simple_webservice_mapper_webservice_returns_bad_json_hosts_not_iterable
 
     status, resources = ctx.mapper.map((username, password))
 
+    httpretty_assert_cookie_passed()
+
     assert status == MapperStatus.INTERNAL_ERROR
     assert list(resources) == []
 
@@ -186,9 +232,7 @@ def test_simple_webservice_mapper_webservice_auth_fails(ctx: Fixture):
     username = "Euler"
     password = "Leonhard"
 
-    httpretty.register_uri(
-        httpretty.GET, "{}/user={}".format(TEST_BASE_URL, username), body="{}", status=403
-    )
+    httpretty_register_auth(status=403)
 
     status, resources = ctx.mapper.map((username, password))
 
@@ -200,6 +244,8 @@ def test_simple_webservice_mapper_webservice_auth_fails(ctx: Fixture):
 def test_simple_webservice_mapper_returns_resources(ctx: Fixture):
     username = "Euler"
     password = "Leonhard"
+
+    httpretty_register_auth()
 
     machine_name1 = "A Machine"
     machine_hostname1 = "asimov.robotics.xyz"
@@ -221,6 +267,8 @@ def test_simple_webservice_mapper_returns_resources(ctx: Fixture):
     )
 
     status, resources = ctx.mapper.map((username, password))
+
+    httpretty_assert_cookie_passed()
 
     assert status == MapperStatus.SUCCESS
     resources = list(resources)

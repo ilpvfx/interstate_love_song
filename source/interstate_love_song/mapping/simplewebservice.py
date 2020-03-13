@@ -49,7 +49,9 @@ class SimpleWebserviceMapper(Mapper):
     The SimpleWebserviceMapper was devised in a hurry during the latest pandemic. It calls another webservice and uses
     that as the mapper.
 
-    It works with any endpoint that fulfills the following requirements:
+    The service must have two endpoints, fulfilling the requirements as described below.
+
+    Mapping endpoint:
 
     - The webservice must have an endpoint that either accepts the path "user=<username>" or the query param
         "user=<username>".
@@ -69,19 +71,29 @@ class SimpleWebserviceMapper(Mapper):
             ]
         }
 
-    - The webservice shall accept HTTP Basic authentication.
-
-    - If authentication fails, it should return Status 403.
-
     - If everything works, Status 200. "No resources" should be indicated with an empty hosts list.
 
     - Any other status codes (except redirects) are deemed as internal errors.
 
     Thus if the `base_url` is `http://oh.my.god.covid19.com`, then it will do `GET` requests to
     `http://oh.my.god.covid19.com/user=<username>`, with a `Authorization: Basic <b64>` header.
+
+    Auth endpoint:
+
+    - The webservice shall have an endpoint that matches <cookie_auth_endpoint>.
+
+    - This endpoint shall accept a HTTP Basic authentication header.
+
+    - On success, return Status 200 and set a cookie with name <cookie_name>.
+
+    - On auth failure, return Status 403.
+
+    - Any other status codes (except redirects) are deemed as internal errors.
     """
 
-    def __init__(self, base_url: str, use_query_parameter=False):
+    def __init__(
+        self, base_url: str, cookie_auth_endpoint: str, cookie_name: str, use_query_parameter=False
+    ):
         """
         :param base_url: The path to the endpoint.
         :param use_query_parameter: Whether to use "/user=<username>" or "?user=<username>".
@@ -92,22 +104,57 @@ class SimpleWebserviceMapper(Mapper):
             raise ValueError("base_url cannot be None")
         self._base_url = str(base_url)
 
+        if cookie_auth_endpoint is None:
+            raise ValueError("cookie_auth_endpoint cannot be None")
+        self._cookie_auth_endpoint = cookie_auth_endpoint
+
+        if cookie_name is None:
+            raise ValueError("cookie_name cannot be None")
+        self._cookie_name = cookie_name
+
         if not isinstance(use_query_parameter, bool):
             raise ValueError("use_query_parameter must be a bool.")
         self._use_query_parameter = use_query_parameter
         if self._use_query_parameter:
             raise NotImplementedError()
 
+    def _auth(self, username, password) -> Tuple[int, str]:
+        headers = {"Authorization": "Basic {}".format(_b64password(username, password))}
+
+        try:
+            url = self._cookie_auth_endpoint
+            response = requests.get(url, headers=headers)
+
+            if response.status_code == 403:
+                return 403, ""
+            elif response.status_code != 200:
+                return 500, ""
+
+            if self._cookie_name not in response.cookies:
+                return 500, ""
+
+            return 200, response.cookies[self._cookie_name]
+        except requests.exceptions.ConnectionError:
+            logger.error("Could not connect to the auth endpoint on the webservice.")
+            return 500, ""
+
     def map(self, credentials: Credentials, previous_host: Optional[str] = None) -> MapperResult:
         username, password = credentials
         username = str(username)
         password = str(password)
 
-        headers = {"Authorization": "Basic {}".format(_b64password(username, password))}
+        auth_status, cookie_value = self._auth(username, password)
+
+        if auth_status == 403:
+            return MapperStatus.AUTHENTICATION_FAILED, []
+        elif auth_status == 500:
+            return MapperStatus.INTERNAL_ERROR, []
+
+        cookies = {self._cookie_name: cookie_value}
 
         try:
             url = self._base_url + "/user={}".format(username)
-            response = requests.get(url, headers=headers)
+            response = requests.get(url, cookies=cookies)
 
             if response.status_code == 403:
                 return MapperStatus.AUTHENTICATION_FAILED, []
