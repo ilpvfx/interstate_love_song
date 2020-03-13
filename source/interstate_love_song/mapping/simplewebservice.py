@@ -46,24 +46,39 @@ def _process_json(data) -> MapperResult:
 class SimpleWebserviceMapper(Mapper):
     """A mapper that uses a very simple remote webservice to authenticate and derive the mapping table.
 
-    The webservice must have an endpoint that either accepts the path "user=<username>" or the query param
-    "user=<username>".
+    The SimpleWebserviceMapper was devised in a hurry during the latest pandemic. It calls another webservice and uses
+    that as the mapper.
 
-    The webservice shall return UTF-8 JSON of the following format:
+    It works with any endpoint that fulfills the following requirements:
+
+    - The webservice must have an endpoint that either accepts the path "user=<username>" or the query param
+        "user=<username>".
+
+    - The webservice shall return UTF-8 JSON of the following format:
 
         {
           "hosts": [
-            {
-                name: "Bilbo Baggins",
-                hostname: "jrr.tolkien.com",
-            },
-            {
-                name: "Winston Smith",
-                hostname: "orwell.mil",
-            }
+                {
+                    "name": "Bilbo Baggins",
+                    "hostname": "jrr.tolkien.com",
+                },
+                {
+                    "name": "Winston Smith",
+                    "hostname": "orwell.mil",
+                }
+            ]
         }
 
-    The webservice shall accept HTTP Basic authentication.
+    - The webservice shall accept HTTP Basic authentication.
+
+    - If authentication fails, it should return Status 403.
+
+    - If everything works, Status 200. "No resources" should be indicated with an empty hosts list.
+
+    - Any other status codes (except redirects) are deemed as internal errors.
+
+    Thus if the `base_url` is `http://oh.my.god.covid19.com`, then it will do `GET` requests to
+    `http://oh.my.god.covid19.com/user=<username>`, with a `Authorization: Basic <b64>` header.
     """
 
     def __init__(self, base_url: str, use_query_parameter=False):
