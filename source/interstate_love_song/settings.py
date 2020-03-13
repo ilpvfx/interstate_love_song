@@ -117,6 +117,8 @@ class SimpleMapperSettings:
 @dataclass
 class SimpleWebserviceMapperSettings:
     base_url: str = "changeme"
+    cookie_auth_url: str = "changeme2"
+    cookie_name: str = "default_cookie_name"
 
 
 class MapperToUse(Enum):
@@ -147,7 +149,7 @@ def load_settings_json(json_str: str) -> Settings:
             "beaker": {"type": ?, "data_dir": ?},
             "logging": {"level": ?},
             "simple_mapper" : {"username": ?, "password_hash": ?, "resources": [?, ...?]},
-            "simple_webservice_mapper": {"base_url": ?}
+            "simple_webservice_mapper": {"base_url": ?, "cookie_auth_url": ?, "cookie_name": ?}
         }
     """
     data = json.loads(json_str)

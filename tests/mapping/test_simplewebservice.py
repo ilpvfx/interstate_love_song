@@ -232,7 +232,7 @@ def test_simple_webservice_mapper_webservice_auth_fails(ctx: Fixture):
     username = "Euler"
     password = "Leonhard"
 
-    httpretty_register_auth(status=403)
+    httpretty_register_auth(status=401)
 
     status, resources = ctx.mapper.map((username, password))
 

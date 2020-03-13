@@ -86,7 +86,7 @@ class SimpleWebserviceMapper(Mapper):
 
     - On success, return Status 200 and set a cookie with name <cookie_name>.
 
-    - On auth failure, return Status 403.
+    - On auth failure, return Status 401.
 
     - Any other status codes (except redirects) are deemed as internal errors.
     """
@@ -125,8 +125,8 @@ class SimpleWebserviceMapper(Mapper):
             url = self._cookie_auth_endpoint
             response = requests.get(url, headers=headers)
 
-            if response.status_code == 403:
-                return 403, ""
+            if response.status_code == 401:
+                return 401, ""
             elif response.status_code != 200:
                 return 500, ""
 
@@ -145,7 +145,7 @@ class SimpleWebserviceMapper(Mapper):
 
         auth_status, cookie_value = self._auth(username, password)
 
-        if auth_status == 403:
+        if auth_status == 401:
             return MapperStatus.AUTHENTICATION_FAILED, []
         elif auth_status == 500:
             return MapperStatus.INTERNAL_ERROR, []
@@ -156,7 +156,7 @@ class SimpleWebserviceMapper(Mapper):
             url = self._base_url + "/user={}".format(username)
             response = requests.get(url, cookies=cookies)
 
-            if response.status_code == 403:
+            if response.status_code == 401:
                 return MapperStatus.AUTHENTICATION_FAILED, []
             elif response.status_code != 200:
                 logger.error(

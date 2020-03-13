@@ -137,7 +137,11 @@ if __name__ == "__main__":
             list(settings.simple_mapper.resources),
         )
     elif settings.mapper == MapperToUse.SIMPLE_WEBSERVICE:
-        mapper = SimpleWebserviceMapper(settings.simple_webservice_mapper.base_url)
+        mapper = SimpleWebserviceMapper(
+            settings.simple_webservice_mapper.base_url,
+            settings.simple_webservice_mapper.cookie_auth_url,
+            settings.simple_webservice_mapper.cookie_name,
+        )
     else:
         logger.critical("Unknown mapper %s", settings.mapper)
 
