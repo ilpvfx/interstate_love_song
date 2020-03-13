@@ -22,12 +22,17 @@ def test_simple_webservice_mapper_constructor_bad_arguments():
         SimpleWebserviceMapper("http://blah.com", "http://blah.com", None)
     with pytest.raises(ValueError):
         SimpleWebserviceMapper("http://blah.com", None, "das_cookie")
+    with pytest.raises(ValueError):
+        SimpleWebserviceMapper(
+            "http://blah.com", "http://blah.com", "das_cookie", auth_username_suffix=None
+        )
 
 
 TEST_BASE_URL = "http://orwell.mil"
 TEST_COOKIE_AUTH_URL = "http://auth.orwell.mil"
 TEST_COOKIE_NAME = "das_cookie"
 TEST_COOKIE_VALUE = "BernhardRiemann"
+TEST_AUTH_USERNAME_SUFFIX = "@bourbaki.fr"
 
 
 def httpretty_register_auth(status=200):
@@ -57,7 +62,14 @@ class Fixture:
 
 @pytest.fixture
 def ctx() -> Fixture:
-    return Fixture(SimpleWebserviceMapper(TEST_BASE_URL, TEST_COOKIE_AUTH_URL, TEST_COOKIE_NAME))
+    return Fixture(
+        SimpleWebserviceMapper(
+            TEST_BASE_URL,
+            TEST_COOKIE_AUTH_URL,
+            TEST_COOKIE_NAME,
+            auth_username_suffix=TEST_AUTH_USERNAME_SUFFIX,
+        )
+    )
 
 
 @httpretty.activate
@@ -75,7 +87,9 @@ def test_simple_webservice_mapper_webservice_receives_auth(ctx: Fixture):
     assert "Authorization" in httpretty.latest_requests()[0].headers
     headers = httpretty.latest_requests()[0].headers
 
-    assert headers["Authorization"] == "Basic {}".format(_b64password(username, password))
+    assert headers["Authorization"] == "Basic {}".format(
+        _b64password(username + TEST_AUTH_USERNAME_SUFFIX, password)
+    )
 
 
 def test_simple_webservice_mapper_bad_credentials(ctx: Fixture):

@@ -111,6 +111,12 @@ For example:
 
 `base_url`: str; the url to the endpoint of the service, should preferably not end in "/".
 
+`cookie_auth_url`: str; a url to an endpoint that accepts HTTP Basic Authentication and returns a token.
+
+`cookie_name`: str; the name of the token to use.
+
+`auth_username_suffix`: str; when sending the HTTP Basic auth, append this suffix to the username (`""`)
+
 ### Root properties
 
 `mapper`: str; one of the values given in the following section (`SIMPLE`)
@@ -183,7 +189,7 @@ Thus if the `base_url` is `http://oh.my.god.covid19.com`, then it will do `GET` 
 
 - On success, return Status 200 and set a cookie with name <cookie_name>.
 
-- On auth failure, return Status 403.
+- On auth failure, return Status 401.
 
 - Any other status codes (except redirects) are deemed as internal errors.
 

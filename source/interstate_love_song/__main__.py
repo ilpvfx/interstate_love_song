@@ -141,6 +141,7 @@ if __name__ == "__main__":
             settings.simple_webservice_mapper.base_url,
             settings.simple_webservice_mapper.cookie_auth_url,
             settings.simple_webservice_mapper.cookie_name,
+            auth_username_suffix=settings.simple_webservice_mapper.auth_username_suffix,
         )
     else:
         logger.critical("Unknown mapper %s", settings.mapper)

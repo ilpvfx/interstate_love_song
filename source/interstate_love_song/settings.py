@@ -119,6 +119,7 @@ class SimpleWebserviceMapperSettings:
     base_url: str = "changeme"
     cookie_auth_url: str = "changeme2"
     cookie_name: str = "default_cookie_name"
+    auth_username_suffix: str = ""
 
 
 class MapperToUse(Enum):

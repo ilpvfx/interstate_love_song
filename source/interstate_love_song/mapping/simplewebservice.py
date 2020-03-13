@@ -92,7 +92,12 @@ class SimpleWebserviceMapper(Mapper):
     """
 
     def __init__(
-        self, base_url: str, cookie_auth_endpoint: str, cookie_name: str, use_query_parameter=False
+        self,
+        base_url: str,
+        cookie_auth_endpoint: str,
+        cookie_name: str,
+        use_query_parameter=False,
+        auth_username_suffix: str = "",
     ):
         """
         :param base_url: The path to the endpoint.
@@ -118,8 +123,16 @@ class SimpleWebserviceMapper(Mapper):
         if self._use_query_parameter:
             raise NotImplementedError()
 
+        if auth_username_suffix is None:
+            raise ValueError("auth_username_suffix cannot be None.")
+        self._auth_username_suffix = auth_username_suffix
+
     def _auth(self, username, password) -> Tuple[int, str]:
-        headers = {"Authorization": "Basic {}".format(_b64password(username, password))}
+        headers = {
+            "Authorization": "Basic {}".format(
+                _b64password(username + self._auth_username_suffix, password)
+            )
+        }
 
         try:
             url = self._cookie_auth_endpoint
