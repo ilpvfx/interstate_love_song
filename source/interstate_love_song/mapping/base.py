@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
-from typing import Tuple, Optional, Sequence
+from typing import Tuple, Optional, Sequence, Any, Mapping
 
 Credentials = Tuple[str, str]
 
@@ -50,3 +50,8 @@ class Mapper(ABC):
     def name(self):
         """The name of this mapper."""
         pass
+
+    @classmethod
+    def create_from_dict(cls, data: Mapping[str, Any]):
+        """Create a new instance from settings"""
+        cls()

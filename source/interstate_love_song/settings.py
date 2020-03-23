@@ -1,10 +1,18 @@
+import inspect
+import logging
 import dataclasses
-import json
-from dataclasses import dataclass
-from typing import Mapping, Any, TypeVar, Type, Optional, Sequence
+from dataclasses import dataclass, field
+from typing import Mapping, Any, Union, TypeVar, Type, Optional, Sequence
 from enum import Enum
 
-from interstate_love_song.mapping import Resource
+import json
+import argparse
+
+from .mapping.base import Mapper
+from .plugins import create_plugin_from_settings
+from .plugins.simple import SimpleMapper, SimpleMapperSettings
+
+logger = logging.getLogger(__name__)
 
 
 class SettingsError(Exception):
@@ -24,7 +32,7 @@ class SettingsError(Exception):
 T = TypeVar("T")
 
 
-def _load_dict_into_dataclass(dc: Type[T], dict: Mapping[str, Any]) -> T:
+def load_dict_into_dataclass(dc: Type[T], dict: Mapping[str, Any]) -> T:
     """Loads the fields from a dataclass, supports the following features:
         - name
         - default
@@ -53,7 +61,7 @@ def _load_dict_into_dataclass(dc: Type[T], dict: Mapping[str, Any]) -> T:
 
     def process(tp, val):
         if dataclasses.is_dataclass(tp):
-            val = _load_dict_into_dataclass(tp, val)
+            val = load_dict_into_dataclass(tp, val)
         elif hasattr(tp, "_name") and tp._name == "Sequence":
             val = [process(tp.__args__[0], item) for item in val]
         elif issubclass(tp, Enum):
@@ -69,6 +77,8 @@ def _load_dict_into_dataclass(dc: Type[T], dict: Mapping[str, Any]) -> T:
         return val
 
     for f in fields:
+        if f.init is False:
+            continue
         if f.name in dict:
             val = dict[f.name]
             val = process(f.type, val)
@@ -108,39 +118,30 @@ class LoggingSettings:
 
 
 @dataclass
-class SimpleMapperSettings:
-    username: str = "test"
-    password_hash: str = "change_me"
-    resources: Sequence[Resource] = dataclasses.field(default_factory=lambda: [])
+class DefaultMapper:
+    plugin: Type[SimpleMapper] = SimpleMapper
+    settings: SimpleMapperSettings = SimpleMapperSettings()
 
-
-@dataclass
-class SimpleWebserviceMapperSettings:
-    base_url: str = "changeme"
-    cookie_auth_url: str = "changeme2"
-    cookie_name: str = "default_cookie_name"
-    auth_username_suffix: str = ""
-
-
-class MapperToUse(Enum):
-    SIMPLE = "SIMPLE"
-    SIMPLE_WEBSERVICE = "SIMPLE_WEBSERVICE"
+    @classmethod
+    def create_mapper(cls):
+        return cls.plugin.create_from_dict(dataclasses.asdict(cls.settings))
 
 
 @dataclass()
 class Settings:
     """Holds the settings. Fields with a default may be omitted in the config."""
 
-    mapper: MapperToUse = MapperToUse.SIMPLE
+    mapper: Union[Type[Mapper], DefaultMapper] = field(init=False, default=DefaultMapper)
     logging: LoggingSettings = LoggingSettings()
     beaker: BeakerSettings = BeakerSettings()
-    simple_mapper: SimpleMapperSettings = SimpleMapperSettings()
-    simple_webservice_mapper: SimpleWebserviceMapperSettings = SimpleWebserviceMapperSettings()
 
     @classmethod
     def load_dict(cls, data: Mapping[str, Any]):
         """See load_settings_json for the expected structure."""
-        return _load_dict_into_dataclass(Settings, data)
+        return load_dict_into_dataclass(Settings, data)
+
+    def json(self):
+        pass
 
 
 def load_settings_json(json_str: str) -> Settings:
@@ -154,7 +155,12 @@ def load_settings_json(json_str: str) -> Settings:
         }
     """
     data = json.loads(json_str)
-    return Settings.load_dict(data)
+    mapper = data.pop("mapper", None)
+    settings = Settings.load_dict(data)
+    if mapper is None:
+        raise SettingsError.missing_property("mapper")
+    settings.mapper = create_plugin_from_settings(mapper)
+    return settings
 
 
 def generate_default_json(dc: Type[T]) -> Mapping[str, Any]:
@@ -166,8 +172,12 @@ def generate_default_json(dc: Type[T]) -> Mapping[str, Any]:
         if dataclasses.is_dataclass(f.type):
             val = generate_default_json(f.type)
         elif f.default is not dataclasses.MISSING:
-            if isinstance(f.default, Enum):
+            if dataclasses.is_dataclass(f.default):
+                val = generate_default_json(f.default)
+            elif isinstance(f.default, Enum):
                 val = f.default.name
+            elif inspect.isclass(f.default) and issubclass(f.default, Mapper):
+                val = f.default.__name__
             else:
                 val = f.default
         else:
@@ -178,5 +188,7 @@ def generate_default_json(dc: Type[T]) -> Mapping[str, Any]:
 
 
 if __name__ == "__main__":
+    from .plugins.simple import SimpleMapper, SimpleMapperSettings
+
     defaults = generate_default_json(Settings)
-    print(json.dumps(defaults))
+    print(json.dumps(defaults, indent=2))

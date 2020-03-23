@@ -1,7 +1,8 @@
+import socket
 import logging
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Sequence, Any, Tuple, Optional, Callable
+from typing import Sequence, Tuple, Optional, Callable
 
 from interstate_love_song import agent
 from interstate_love_song.agent import AllocateSessionStatus
@@ -24,8 +25,6 @@ from interstate_love_song.transport import (
 )
 
 logger = logging.getLogger(__name__)
-
-import socket
 
 
 class ProtocolState(Enum):

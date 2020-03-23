@@ -1,7 +1,10 @@
+import dataclasses
 import argparse
 
-from .base import *
 from hashlib import pbkdf2_hmac
+from typing import Mapping, Any
+
+from interstate_love_song.mapping.base import *
 
 
 def hash_pass(s: str, salt="IGNORED"):
@@ -10,6 +13,13 @@ def hash_pass(s: str, salt="IGNORED"):
     Not the best way to store a password since the salt is known, but it offers a bit more protection than storing it
     plaintext."""
     return pbkdf2_hmac("sha256", s.encode("utf-8"), salt.encode("utf-8"), 100000).hex()
+
+
+@dataclass
+class SimpleMapperSettings:
+    username: str = "test"
+    password_hash: str = "change_me"
+    resources: Sequence[Resource] = dataclasses.field(default_factory=lambda: [])
 
 
 class SimpleMapper(Mapper):
@@ -58,6 +68,13 @@ class SimpleMapper(Mapper):
     @property
     def name(self):
         return "SimpleMapper"
+
+    @classmethod
+    def create_from_dict(cls, data: Mapping[str, Any]):
+        from interstate_love_song.settings import load_dict_into_dataclass
+
+        settings = load_dict_into_dataclass(SimpleMapperSettings, data)
+        return cls(settings.username, settings.password_hash, settings.resources)
 
 
 if __name__ == "__main__":

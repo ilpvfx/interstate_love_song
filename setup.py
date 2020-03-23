@@ -1,8 +1,12 @@
+# -*- coding: utf-8 -*-
 from setuptools import setup, find_packages
 from setuptools.command.test import test
 
 import os
 import sys
+
+if sys.version_info < (3, 7):
+    sys.exit("Sorry, Python < 3.7 is not supported")
 
 sys.executable = "/bin/env python"
 
@@ -51,8 +55,9 @@ setup(
     name="interstate_love_song",
     version=VERSION,
     packages=find_packages(SOURCE_PATH),
-    author="Eric Hermelin, Simon Otter",
-    author_email="eric.hermelin@ilpvfx.com, simon.otter@ilpvfx.com",
+    author="Eric Hermelin, Simon Otter, Fredrik Brännbacka",
+    author_email="eric.hermelin@ilpvfx.com, simon.otter@ilpvfx.com, fredrik.brannbacka@ilpvfx.com",
+    python_requires=">3.6",
     entry_points={"console_scripts": ["interstate_love_song=interstate_love_song",],},
     setup_requires=setup_requires,
     install_requires=[

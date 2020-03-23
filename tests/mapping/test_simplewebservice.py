@@ -4,7 +4,7 @@ from dataclasses import dataclass
 import pytest
 import httpretty
 
-from interstate_love_song.mapping.simplewebservice import (
+from interstate_love_song.plugins.simplewebservice import (
     SimpleWebserviceMapper,
     MapperStatus,
     _b64password,

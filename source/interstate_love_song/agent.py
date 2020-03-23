@@ -6,7 +6,7 @@ from typing import Optional, Tuple
 from xml.etree.ElementTree import Element, SubElement, ElementTree, fromstring
 
 import requests
-from urllib3.exceptions import NewConnectionError, ConnectTimeoutError, MaxRetryError
+from urllib3.exceptions import NewConnectionError
 
 logger = logging.getLogger(__name__)
 

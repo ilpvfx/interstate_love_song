@@ -5,7 +5,8 @@ from json import JSONDecodeError
 
 import requests
 
-from .base import *
+from interstate_love_song.mapping.base import *
+from interstate_love_song.settings import load_dict_into_dataclass
 
 from urllib.parse import urljoin
 
@@ -41,6 +42,14 @@ def _process_json(data) -> MapperResult:
         results.append(Resource(str(entry["name"]), str(entry["hostname"])))
 
     return MapperStatus.SUCCESS, results
+
+
+@dataclass
+class SimpleWebserviceMapperSettings:
+    base_url: str = "changeme"
+    cookie_auth_url: str = "changeme2"
+    cookie_name: str = "default_cookie_name"
+    auth_username_suffix: str = ""
 
 
 class SimpleWebserviceMapper(Mapper):
@@ -194,3 +203,13 @@ class SimpleWebserviceMapper(Mapper):
     @property
     def name(self):
         return "SimpleWebserviceMapper"
+
+    @classmethod
+    def create_from_dict(cls, data: Mapping[str, Any]):
+        settings = load_dict_into_dataclass(SimpleWebserviceMapperSettings, data)
+        return cls(
+            settings.base_url,
+            settings.cookie_auth_url,
+            settings.cookie_name,
+            auth_username_suffix=settings.auth_username_suffix,
+        )

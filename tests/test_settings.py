@@ -1,5 +1,6 @@
+import logging
 import json
-from typing import Sequence
+from typing import Mapping, Sequence, Any
 from dataclasses import dataclass
 
 from pytest import raises
@@ -8,8 +9,10 @@ from interstate_love_song import settings
 import pytest
 from argparse import Namespace
 
-from interstate_love_song.mapping import Resource
-from interstate_love_song.settings import MapperToUse
+from interstate_love_song.mapping import Mapper, Resource
+
+from interstate_love_song.plugins.simple import SimpleMapper
+from interstate_love_song.plugins.simplewebservice import SimpleWebserviceMapper
 
 
 @dataclass
@@ -20,7 +23,7 @@ class DummyData:
 
 
 def test_load_dict_into_dataclass_defaults_set():
-    data = settings._load_dict_into_dataclass(DummyData, {"required": 1.23})
+    data = settings.load_dict_into_dataclass(DummyData, {"required": 1.23})
 
     assert abs(data.required - 1.23) < 0.001
     assert data.a == "Riemann"
@@ -29,11 +32,11 @@ def test_load_dict_into_dataclass_defaults_set():
 
 def test_load_dict_into_dataclass_raises_on_missing_property():
     with raises(settings.SettingsError):
-        data = settings._load_dict_into_dataclass(DummyData, {})
+        data = settings.load_dict_into_dataclass(DummyData, {})
 
 
 def test_load_dict_into_dataclass_defaults_overridden():
-    data = settings._load_dict_into_dataclass(DummyData, {"required": 1.23, "a": "Euler", "b": 321})
+    data = settings.load_dict_into_dataclass(DummyData, {"required": 1.23, "a": "Euler", "b": 321})
 
     assert abs(data.required - 1.23) < 0.001
     assert data.a == "Euler"
@@ -41,7 +44,7 @@ def test_load_dict_into_dataclass_defaults_overridden():
 
 
 def test_load_dict_into_dataclass_converts_type():
-    data = settings._load_dict_into_dataclass(DummyData, {"required": 1.23, "a": 123, "b": "321"})
+    data = settings.load_dict_into_dataclass(DummyData, {"required": 1.23, "a": 123, "b": "321"})
 
     assert abs(data.required - 1.23) < 0.001
     assert data.a == "123"
@@ -50,7 +53,7 @@ def test_load_dict_into_dataclass_converts_type():
 
 def test_load_dict_into_dataclass_type_conversion_fails():
     with raises(settings.SettingsError):
-        data = settings._load_dict_into_dataclass(
+        data = settings.load_dict_into_dataclass(
             DummyData, {"required": 1.23, "a": "Euler", "b": "hej"}
         )
 
@@ -62,7 +65,7 @@ class DummyData2:
 
 
 def test_load_dict_into_dataclass_type_is_dataclass():
-    data = settings._load_dict_into_dataclass(
+    data = settings.load_dict_into_dataclass(
         DummyData2, {"a": "Euler", "b": {"required": 1.23, "a": 123, "b": "321"}}
     )
 
@@ -80,7 +83,7 @@ class DummyData4:
 
 
 def test_load_dict_into_dataclass_type_is_list():
-    data = settings._load_dict_into_dataclass(
+    data = settings.load_dict_into_dataclass(
         DummyData4,
         {
             "a": ["Euler", "Leonhard"],
@@ -115,16 +118,16 @@ class DummyData3:
 
 
 def test_load_dict_into_dataclass_enum_converted():
-    data = settings._load_dict_into_dataclass(DummyData3, {"val": "A",})
+    data = settings.load_dict_into_dataclass(DummyData3, {"val": "A",})
 
     assert data.val == DummyEnum.A
 
-    data = settings._load_dict_into_dataclass(DummyData3, {"val": "B",})
+    data = settings.load_dict_into_dataclass(DummyData3, {"val": "B",})
 
     assert data.val == DummyEnum.B
 
     with raises(settings.SettingsError):
-        data = settings._load_dict_into_dataclass(DummyData3, {"val": "C",})
+        data = settings.load_dict_into_dataclass(DummyData3, {"val": "C",})
 
 
 def test_load_settings_json():
@@ -133,44 +136,42 @@ def test_load_settings_json():
     beaker = Namespace(type="Riemann", data_dir="Erdos",)
 
     simple_mapper = Namespace(
+        plugin="SimpleMapper",
         username="Kurt",
         password_hash="Gödel",
         resource_name="Kurt's Machine",
         resource_hostname="kurt.godel.edu",
     )
 
-    simple_webservice_mapper = Namespace(base_url="Kurt",)
+    simple_webservice_mapper = Namespace(plugin="SimpleWebserviceMapper", base_url="Kurt",)
 
     raw_settings_json = """
     {{
-        "mapper": "SIMPLE",
+        "mapper": {{
+            "plugin": "{mapper.plugin}",
+            "settings": {{
+                "username": "{mapper.username}", "password_hash": "{mapper.password_hash}",
+                "resources": [{{
+                    "name": "{mapper.resource_name}",
+                    "hostname": "{mapper.resource_hostname}"
+                }}]
+            }}
+        }},
         "logging": {{
             "level": "{logging.level}"
         }},
         "beaker": {{
             "type": "{beaker.type}",
             "data_dir": "{beaker.data_dir}"
-        }},
-        "simple_mapper" : {{
-            "username": "{simple_mapper.username}", "password_hash": "{simple_mapper.password_hash}", 
-            "resources": [{{
-                "name": "{simple_mapper.resource_name}",
-                "hostname": "{simple_mapper.resource_hostname}"
-            }}]
-        }},
-        "simple_webservice_mapper": {{"base_url": "{simple_webservice_mapper.base_url}"}}
-
+        }}
     }}
     """.format(
-        logging=logging,
-        beaker=beaker,
-        simple_mapper=simple_mapper,
-        simple_webservice_mapper=simple_webservice_mapper,
+        logging=logging, beaker=beaker, mapper=simple_mapper
     )
 
     result = settings.load_settings_json(raw_settings_json)
 
-    assert result.mapper == MapperToUse.SIMPLE
+    assert isinstance(result.mapper, SimpleMapper)
 
     assert isinstance(result.logging, settings.LoggingSettings)
     assert result.logging.level == settings.LoggingLevel.INFO
@@ -179,17 +180,36 @@ def test_load_settings_json():
     assert result.beaker.type == beaker.type
     assert result.beaker.data_dir == beaker.data_dir
 
-    assert isinstance(result.simple_mapper, settings.SimpleMapperSettings)
-    assert result.simple_mapper.username == simple_mapper.username
-    assert result.simple_mapper.password_hash == simple_mapper.password_hash
-    assert result.simple_mapper.resources == [
+    assert result.mapper.username == simple_mapper.username
+    assert result.mapper.password_hash == simple_mapper.password_hash
+    assert result.mapper.resources == [
         Resource(simple_mapper.resource_name, simple_mapper.resource_hostname)
     ]
 
-    assert isinstance(result.simple_webservice_mapper, settings.SimpleWebserviceMapperSettings)
-    assert result.simple_webservice_mapper.base_url == simple_webservice_mapper.base_url
+    raw_settings_json = """
+    {{
+        "mapper": {{
+            "plugin": "{mapper.plugin}",
+            "settings": {{"base_url": "{mapper.base_url}"}}
+        }},
+        "logging": {{
+            "level": "{logging.level}"
+        }},
+        "beaker": {{
+            "type": "{beaker.type}",
+            "data_dir": "{beaker.data_dir}"
+        }}
+    }}
+    """.format(
+        logging=logging, beaker=beaker, mapper=simple_webservice_mapper
+    )
+
+    result = settings.load_settings_json(raw_settings_json)
+    assert isinstance(result.mapper, SimpleWebserviceMapper)
 
 
 def test_load_settings_json_missing_database():
-    raw_settings_json = "{}"
-    result = settings.load_settings_json(raw_settings_json)
+    with pytest.raises(settings.SettingsError) as excinfo:
+        raw_settings_json = "{}"
+        settings.load_settings_json(raw_settings_json)
+    assert str(excinfo.value) == "Property mapper was not set."

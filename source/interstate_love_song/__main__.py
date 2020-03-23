@@ -3,10 +3,8 @@ import logging
 import sys
 
 from interstate_love_song._version import VERSION
-from interstate_love_song.mapping import SimpleMapper
-from interstate_love_song.mapping.simplewebservice import SimpleWebserviceMapper
 from .http import get_falcon_api, BrokerResource, standard_protocol_creator
-from .settings import Settings, load_settings_json, MapperToUse
+from .settings import Settings, DefaultMapper, load_settings_json
 
 logger = logging.getLogger(__name__)
 
@@ -129,29 +127,16 @@ if __name__ == "__main__":
         with open(args.config, "r") as f:
             settings = load_settings_json(f.read())
 
-    mapper = None
-    if settings.mapper == MapperToUse.SIMPLE:
-        mapper = SimpleMapper(
-            settings.simple_mapper.username,
-            settings.simple_mapper.password_hash,
-            list(settings.simple_mapper.resources),
-        )
-    elif settings.mapper == MapperToUse.SIMPLE_WEBSERVICE:
-        mapper = SimpleWebserviceMapper(
-            settings.simple_webservice_mapper.base_url,
-            settings.simple_webservice_mapper.cookie_auth_url,
-            settings.simple_webservice_mapper.cookie_name,
-            auth_username_suffix=settings.simple_webservice_mapper.auth_username_suffix,
-        )
-    else:
-        logger.critical("Unknown mapper %s", settings.mapper)
+    if settings.mapper is DefaultMapper:
+        logger.warning("No mapper configured, using default")
+        settings.mapper = settings.mapper.create_mapper()
 
     logger.info("Server %s, bound to %s:%s", args.server, args.host, args.port)
-    logger.info("Mapper: %s;", mapper.name)
+    logger.info("Mapper: %s;", settings.mapper.name)
     logger.info("SSL; cert: %s; pkey: %s;", args.cert, args.key)
 
     wsgi = get_falcon_api(
-        BrokerResource(standard_protocol_creator(mapper)),
+        BrokerResource(standard_protocol_creator(settings.mapper)),
         settings,
         use_fallback_sessions=args.fallback_sessions,
     )

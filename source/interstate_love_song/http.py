@@ -3,9 +3,8 @@ from abc import ABC, abstractmethod
 from io import BytesIO
 
 from falcon.util import compat
-from pyexpat import ExpatError
 from typing import Callable, Any, Optional
-from xml.etree.ElementTree import ParseError, tostring, ElementTree
+from xml.etree.ElementTree import ParseError, ElementTree
 
 import falcon
 from defusedxml.ElementTree import fromstring
@@ -16,14 +15,8 @@ from beaker.session import SessionObject
 
 from ._version import VERSION
 from .mapping import Mapper
-from .protocol import (
-    ProtocolState,
-    ProtocolAction,
-    ProtocolHandler,
-    ProtocolSession,
-    BrokerProtocolHandler,
-)
-from .serialization import serialize_message, deserialize_message, HelloRequest
+from .protocol import ProtocolHandler, ProtocolSession, BrokerProtocolHandler
+from .serialization import serialize_message, deserialize_message
 from .settings import Settings
 
 ProtocolCreator = Callable[[], ProtocolHandler]
@@ -147,7 +140,7 @@ class BrokerResource:
             resp.content_type = falcon.MEDIA_XML
 
             logger.debug("Responded with %s.", str(out_msg))
-        except SyntaxError as e:
+        except SyntaxError:
             raise falcon.HTTPBadRequest(description="Malformed XML.")
 
     def on_get(self, req, resp):
@@ -162,7 +155,7 @@ class BrokerResource:
                 </p>
             </div>
         </body>
-        </html> 
+        </html>
         """.format(
             hacker_base64=static.hacker_img, version=VERSION
         )

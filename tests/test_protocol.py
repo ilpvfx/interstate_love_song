@@ -15,6 +15,10 @@ class DummyMapper(Mapper):
     def name(self):
         return "DummyMapper"
 
+    @classmethod
+    def create_from_settings(cls, settings):
+        return cls()
+
     def __init__(self, username="test", password="test", resources=[]):
         super().__init__()
         self.username = username

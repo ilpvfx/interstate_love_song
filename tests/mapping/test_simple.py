@@ -1,8 +1,8 @@
-from interstate_love_song.mapping import SimpleMapper
+from interstate_love_song.plugins.simple import SimpleMapper
 
 import pytest
 
-from interstate_love_song.mapping.simple import hash_pass, MapperStatus, Resource
+from interstate_love_song.plugins.simple import hash_pass, MapperStatus, Resource
 
 
 def test_simple_mapper_constructor_bad_arguments():
