@@ -150,8 +150,6 @@ def load_settings_json(json_str: str) -> Settings:
             "mapper": ?,
             "beaker": {"type": ?, "data_dir": ?},
             "logging": {"level": ?},
-            "simple_mapper" : {"username": ?, "password_hash": ?, "resources": [?, ...?]},
-            "simple_webservice_mapper": {"base_url": ?, "cookie_auth_url": ?, "cookie_name": ?}
         }
     """
     data = json.loads(json_str)

@@ -127,8 +127,6 @@ connecting client.
 
 ### SimpleMapper
 
-`SIMPLE`
-
 The Simple Mapper is, indeed simple. It authenticates only one, common, user. It returns a given set of resources for
 this user, with no special logic.
 
@@ -144,56 +142,20 @@ To generate a hashed password, simply call:
 python -m interstate_love_song.mapping.simple "a very long password"
 ```
 
-### SimpleWebserviceMapper
+### Plugin Mappers
 
-`SIMPLE_WEBSERVICE`
+Mappers can be written as plugins in separate python packages.  
+For interstate_love_song to be able to find your plugin, you need to define a entry point in your `setup.py`:
 
-The SimpleWebserviceMapper was devised in a hurry during the latest pandemic. It calls another webservice and uses that 
-as the mapper.
-
-The service must have two endpoints, fulfilling the requirements as described below.
-
-#### Mapping endpoint
-
-- The webservice must have an endpoint that either accepts the path "user=<username>" or the query param
-    "user=<username>".
-
-- The webservice shall return UTF-8 JSON of the following format:
-
-```json
-{
-  "hosts": [
-        {
-            "name": "Bilbo Baggins",
-            "hostname": "jrr.tolkien.com",
-        },
-        {
-            "name": "Winston Smith",
-            "hostname": "orwell.mil",
-        }
-    ]
-}
 ```
-- If everything works, Status 200. "No resources" should be indicated with an empty hosts list.
+setup(
+  ...
+  entry_points={'interstate_love_song.plugins': 'SimpleWebserviceMapper = SimpleWebserviceMapper'},
+  ...
+)
+```
 
-- Any other status codes (except redirects) are deemed as internal errors.
-
-Thus if the `base_url` is `http://oh.my.god.covid19.com`, then it will do `GET` requests to
-`http://oh.my.god.covid19.com/user=<username>`, with a `Authorization: Basic <b64>` header.
-
-#### Auth endpoint
-
-- The webservice shall have an endpoint that matches <cookie_auth_endpoint>.
-
-- This endpoint shall accept a HTTP Basic authentication header.
-
-- On success, return Status 200 and set a cookie with name <cookie_name>.
-
-- On auth failure, return Status 401.
-
-- Any other status codes (except redirects) are deemed as internal errors.
-
-The resources returned are presented to the PCOIP-client.
+For an example, check out our [SimpleWebServiceMapper repo](https://github.com/ilpvfx/interstate_love_song.SimpleWebserviceMapper).
 
 
 ## Requirements

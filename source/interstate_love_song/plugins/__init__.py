@@ -23,13 +23,16 @@ class PluginError(Exception):
 
 def get_builtin_plugin_modules():
     """Get builtin plugins from this module"""
-    from . import simple, simplewebservice
+    from . import simple
 
-    return {"SIMPLE": simple, "SIMPLE_WEBSERVICE": simplewebservice}
+    return {
+        "SIMPLE": simple,
+    }
 
 
 def get_discovered_plugin_modules():
     """Find modules that have defined their entrypoint as interstate_love_song.plugins"""
+    print(__name__, list(pkg_resources.iter_entry_points(__name__)))
     return {
         entry_point.name: entry_point.load()
         for entry_point in pkg_resources.iter_entry_points(__name__)
@@ -84,3 +87,8 @@ def create_plugin_from_settings(settings: Mapping[str, Any]):
     except SettingsError as e:
         logger.error("Failed to configure plugin: %s, %s", plugin_type_name, e)
     raise PluginError("Couldn't create plugin from settings: {}".format(settings))
+
+
+if __name__ == "__main__":
+    plugins = get_available_plugins()
+    print(plugins)
