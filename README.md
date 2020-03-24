@@ -78,48 +78,14 @@ Check out the [Beaker docs](https://beaker.readthedocs.io/en/latest/configuratio
 
 `data_dir`: str; session store location (`/tmp`)
 
-#### simple_mapper
+#### mapper
 
-`username`: str; authentication user (`test`)
+`mapper`: Mapping[str, Any]; `{"plugin": "SimpleMapper", "settings": {}}`
 
-`password_hash`: str; authentication password, see the Simple Mapper section (`change_me`)
+`mapper.name`: str; name of the mapper to use (`SimpleMapper`)
+`mapper.settings`: str; mapper settings
 
-`resources`: Sequence[Resource]; the resources to present (`[]`)
-
-For example:
-```json
-{
-    "username": "kolmogorov", "password_hash": "goodluckgettingthishash",
-    "resources": [
-      {
-        "name": "Elisabeth Taylor",
-        "hostname": "vmwr-test-01.example.com"
-      },
-      {
-        "name": "James Dean",
-        "hostname": "vmwr-test-01.example.com"
-      },
-      {
-        "name": "Marlon Brando",
-        "hostname": "localhost"
-      }
-    ]
-}
-```
-
-### simple_webservice_mapper
-
-`base_url`: str; the url to the endpoint of the service, should preferably not end in "/".
-
-`cookie_auth_url`: str; a url to an endpoint that accepts HTTP Basic Authentication and returns a token.
-
-`cookie_name`: str; the name of the token to use.
-
-`auth_username_suffix`: str; when sending the HTTP Basic auth, append this suffix to the username (`""`)
-
-### Root properties
-
-`mapper`: str; one of the values given in the following section (`SIMPLE`)
+*For an example see [SimpleMapper](#SimpleMapper)*
 
 ## Mappers
 Mappers assign resources to users; in plain english, they decide which Teradici machines, if any, to present to a 
@@ -131,6 +97,42 @@ The Simple Mapper is, indeed simple. It authenticates only one, common, user. It
 this user, with no special logic.
 
 The Simple Mapper is mostly for testing and to serve as a reference implementation.
+
+#### Settings
+
+`username`: str; authentication user (`test`)
+
+`password_hash`: str; authentication password, see the Simple Mapper section (`change_me`)
+
+`resources`: Sequence[Resource]; the resources to present (`[]`)
+
+**Example Config for SimpleMapper**
+For example:
+```json
+{
+  ...
+  "mapper": {
+    "plugin": "SimpleMapper",
+    "settings": {
+      "username": "kolmogorov", "password_hash": "goodluckgettingthishash",
+      "resources": [
+        {
+          "name": "Elisabeth Taylor",
+          "hostname": "vmwr-test-01.example.com"
+        },
+        {
+          "name": "James Dean",
+          "hostname": "vmwr-test-01.example.com"
+        },
+        {
+          "name": "Marlon Brando",
+          "hostname": "localhost"
+        }
+      ]
+    }
+  }
+}
+```
 
 #### Generating a password hash
 The username and password is stored in the settings. To provide a modicum of security over a plaintext password, we require
@@ -145,7 +147,7 @@ python -m interstate_love_song.mapping.simple "a very long password"
 ### Plugin Mappers
 
 Mappers can be written as plugins in separate python packages.  
-For interstate_love_song to be able to find your plugin, you need to define a entry point in your `setup.py`:
+To be able to find your plugin, you need to define an entrypoint in your `setup.py`:
 
 ```
 setup(
