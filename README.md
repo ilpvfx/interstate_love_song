@@ -82,7 +82,7 @@ Check out the [Beaker docs](https://beaker.readthedocs.io/en/latest/configuratio
 
 `mapper`: dict; `{"plugin": "SimpleMapper", "settings": {}}`
 
-`mapper.name`: str; name of the mapper to use (`SimpleMapper`)
+`mapper.plugin`: str; name of the mapper to use (`SimpleMapper`)
 
 `mapper.settings`: dict; mapper settings
 
