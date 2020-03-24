@@ -80,11 +80,11 @@ Check out the [Beaker docs](https://beaker.readthedocs.io/en/latest/configuratio
 
 #### mapper
 
-`mapper`: Mapping[str, Any]; `{"plugin": "SimpleMapper", "settings": {}}`
+`mapper`: dict; `{"plugin": "SimpleMapper", "settings": {}}`
 
 `mapper.name`: str; name of the mapper to use (`SimpleMapper`)
 
-`mapper.settings`: str; mapper settings
+`mapper.settings`: dict; mapper settings
 
 *For an example see [SimpleMapper](#SimpleMapper)*
 
