@@ -83,6 +83,7 @@ Check out the [Beaker docs](https://beaker.readthedocs.io/en/latest/configuratio
 `mapper`: Mapping[str, Any]; `{"plugin": "SimpleMapper", "settings": {}}`
 
 `mapper.name`: str; name of the mapper to use (`SimpleMapper`)
+
 `mapper.settings`: str; mapper settings
 
 *For an example see [SimpleMapper](#SimpleMapper)*
