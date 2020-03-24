@@ -78,48 +78,15 @@ Check out the [Beaker docs](https://beaker.readthedocs.io/en/latest/configuratio
 
 `data_dir`: str; session store location (`/tmp`)
 
-#### simple_mapper
+#### mapper
 
-`username`: str; authentication user (`test`)
+`mapper`: dict; `{"plugin": "SimpleMapper", "settings": {}}`
 
-`password_hash`: str; authentication password, see the Simple Mapper section (`change_me`)
+`mapper.name`: str; name of the mapper to use (`SimpleMapper`)
 
-`resources`: Sequence[Resource]; the resources to present (`[]`)
+`mapper.settings`: dict; mapper settings
 
-For example:
-```json
-{
-    "username": "kolmogorov", "password_hash": "goodluckgettingthishash",
-    "resources": [
-      {
-        "name": "Elisabeth Taylor",
-        "hostname": "vmwr-test-01.example.com"
-      },
-      {
-        "name": "James Dean",
-        "hostname": "vmwr-test-01.example.com"
-      },
-      {
-        "name": "Marlon Brando",
-        "hostname": "localhost"
-      }
-    ]
-}
-```
-
-### simple_webservice_mapper
-
-`base_url`: str; the url to the endpoint of the service, should preferably not end in "/".
-
-`cookie_auth_url`: str; a url to an endpoint that accepts HTTP Basic Authentication and returns a token.
-
-`cookie_name`: str; the name of the token to use.
-
-`auth_username_suffix`: str; when sending the HTTP Basic auth, append this suffix to the username (`""`)
-
-### Root properties
-
-`mapper`: str; one of the values given in the following section (`SIMPLE`)
+*For an example see [SimpleMapper](#SimpleMapper)*
 
 ## Mappers
 Mappers assign resources to users; in plain english, they decide which Teradici machines, if any, to present to a 
@@ -127,12 +94,46 @@ connecting client.
 
 ### SimpleMapper
 
-`SIMPLE`
-
 The Simple Mapper is, indeed simple. It authenticates only one, common, user. It returns a given set of resources for
 this user, with no special logic.
 
 The Simple Mapper is mostly for testing and to serve as a reference implementation.
+
+#### Settings
+
+`username`: str; authentication user (`test`)
+
+`password_hash`: str; authentication password, see the Simple Mapper section (`change_me`)
+
+`resources`: Sequence[Resource]; the resources to present (`[]`)
+
+**Example Config for SimpleMapper**
+For example:
+```json
+{
+  ...
+  "mapper": {
+    "plugin": "SimpleMapper",
+    "settings": {
+      "username": "kolmogorov", "password_hash": "goodluckgettingthishash",
+      "resources": [
+        {
+          "name": "Elisabeth Taylor",
+          "hostname": "vmwr-test-01.example.com"
+        },
+        {
+          "name": "James Dean",
+          "hostname": "vmwr-test-01.example.com"
+        },
+        {
+          "name": "Marlon Brando",
+          "hostname": "localhost"
+        }
+      ]
+    }
+  }
+}
+```
 
 #### Generating a password hash
 The username and password is stored in the settings. To provide a modicum of security over a plaintext password, we require
@@ -144,56 +145,20 @@ To generate a hashed password, simply call:
 python -m interstate_love_song.mapping.simple "a very long password"
 ```
 
-### SimpleWebserviceMapper
+### Plugin Mappers
 
-`SIMPLE_WEBSERVICE`
+Mappers can be written as plugins in separate python packages.  
+To be able to find your plugin, you need to define an entrypoint in your `setup.py`:
 
-The SimpleWebserviceMapper was devised in a hurry during the latest pandemic. It calls another webservice and uses that 
-as the mapper.
-
-The service must have two endpoints, fulfilling the requirements as described below.
-
-#### Mapping endpoint
-
-- The webservice must have an endpoint that either accepts the path "user=<username>" or the query param
-    "user=<username>".
-
-- The webservice shall return UTF-8 JSON of the following format:
-
-```json
-{
-  "hosts": [
-        {
-            "name": "Bilbo Baggins",
-            "hostname": "jrr.tolkien.com",
-        },
-        {
-            "name": "Winston Smith",
-            "hostname": "orwell.mil",
-        }
-    ]
-}
 ```
-- If everything works, Status 200. "No resources" should be indicated with an empty hosts list.
+setup(
+  ...
+  entry_points={'interstate_love_song.plugins': 'SimpleWebserviceMapper = SimpleWebserviceMapper'},
+  ...
+)
+```
 
-- Any other status codes (except redirects) are deemed as internal errors.
-
-Thus if the `base_url` is `http://oh.my.god.covid19.com`, then it will do `GET` requests to
-`http://oh.my.god.covid19.com/user=<username>`, with a `Authorization: Basic <b64>` header.
-
-#### Auth endpoint
-
-- The webservice shall have an endpoint that matches <cookie_auth_endpoint>.
-
-- This endpoint shall accept a HTTP Basic authentication header.
-
-- On success, return Status 200 and set a cookie with name <cookie_name>.
-
-- On auth failure, return Status 401.
-
-- Any other status codes (except redirects) are deemed as internal errors.
-
-The resources returned are presented to the PCOIP-client.
+For an example, check out our [SimpleWebServiceMapper repo](https://github.com/ilpvfx/interstate_love_song.SimpleWebserviceMapper).
 
 
 ## Requirements

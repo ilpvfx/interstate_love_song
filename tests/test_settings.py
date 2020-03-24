@@ -12,7 +12,6 @@ from argparse import Namespace
 from interstate_love_song.mapping import Mapper, Resource
 
 from interstate_love_song.plugins.simple import SimpleMapper
-from interstate_love_song.plugins.simplewebservice import SimpleWebserviceMapper
 
 
 @dataclass
@@ -143,8 +142,6 @@ def test_load_settings_json():
         resource_hostname="kurt.godel.edu",
     )
 
-    simple_webservice_mapper = Namespace(plugin="SimpleWebserviceMapper", base_url="Kurt",)
-
     raw_settings_json = """
     {{
         "mapper": {{
@@ -185,27 +182,6 @@ def test_load_settings_json():
     assert result.mapper.resources == [
         Resource(simple_mapper.resource_name, simple_mapper.resource_hostname)
     ]
-
-    raw_settings_json = """
-    {{
-        "mapper": {{
-            "plugin": "{mapper.plugin}",
-            "settings": {{"base_url": "{mapper.base_url}"}}
-        }},
-        "logging": {{
-            "level": "{logging.level}"
-        }},
-        "beaker": {{
-            "type": "{beaker.type}",
-            "data_dir": "{beaker.data_dir}"
-        }}
-    }}
-    """.format(
-        logging=logging, beaker=beaker, mapper=simple_webservice_mapper
-    )
-
-    result = settings.load_settings_json(raw_settings_json)
-    assert isinstance(result.mapper, SimpleWebserviceMapper)
 
 
 def test_load_settings_json_missing_database():

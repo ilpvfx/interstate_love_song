@@ -3,10 +3,7 @@ from interstate_love_song.plugins import *
 
 
 def test_find_builtin_plugins():
-    assert all(
-        item in get_available_plugins().keys()
-        for item in ["SimpleMapper", "SimpleWebserviceMapper"]
-    )
+    assert all(item in get_available_plugins().keys() for item in ["SimpleMapper"])
 
 
 def test_no_configured_plugin():
