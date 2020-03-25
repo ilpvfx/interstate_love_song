@@ -8,6 +8,10 @@ RUN pip install \
     greenlet==0.4.15 \
     gunicorn==20.0.4
 
+ADD interstate_love_song.SimpleWebserviceMapper /opt/SimpleWebserviceMapper
+WORKDIR /opt/SimpleWebserviceMapper
+RUN python setup.py install
+
 WORKDIR /opt/interstate_love_song
 ADD source .
 
