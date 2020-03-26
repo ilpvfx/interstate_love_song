@@ -9,7 +9,7 @@ from .settings import Settings, DefaultMapper, load_settings_json
 logger = logging.getLogger(__name__)
 
 
-def gunicorn_runner(wsgi, host, port, cert, key, worker_class="gevent", workers=2):
+def gunicorn_runner(wsgi, host, port, cert, key, no_ssl=False, worker_class="gevent", workers=2):
     from gunicorn.app.base import BaseApplication
 
     class _GunicornApp(BaseApplication):
@@ -35,33 +35,39 @@ def gunicorn_runner(wsgi, host, port, cert, key, worker_class="gevent", workers=
 
     options = {
         "bind": "{}:{}".format(host, port),
-        "certfile": cert,
-        "keyfile": key,
         "log-level": "debug",
         "worker_class": worker_class,
         "workers": workers,
     }
+    if not no_ssl:
+        options.update(
+            {"certfile": cert, "keyfile": key,}
+        )
 
     logger.info("Running gunicorn.")
     _GunicornApp(wsgi, options).run()
 
 
-def werkzeug_runner(wsgi, host, port, cert, key):
+def werkzeug_runner(wsgi, host, port, cert, key, no_ssl=False):
     """Doesn't seem to send chunked responses properly, and so won't work with PCOIP-clients it seems."""
     from werkzeug.serving import run_simple
 
     logger.info("Running werkzeug.")
-    run_simple(host, port, wsgi, ssl_context=(cert, key))
+    if not no_ssl:
+        run_simple(host, port, wsgi, ssl_context=(cert, key))
+    else:
+        run_simple(host, port, wsgi)
 
 
-def cherrypy_runner(wsgi, host, port, cert, key):
+def cherrypy_runner(wsgi, host, port, cert, key, no_ssl=False):
     import cherrypy
     from cherrypy import tree
 
     tree.graft(wsgi, "/")
 
-    cherrypy.server.ssl_certificate = cert
-    cherrypy.server.ssl_private_key = key
+    if not no_ssl:
+        cherrypy.server.ssl_certificate = cert
+        cherrypy.server.ssl_private_key = key
     cherrypy.server.bind_addr = (host, port)
 
     logger.info("Running cherrypy.")
@@ -112,6 +118,7 @@ if __name__ == "__main__":
         "--gunicorn-workers", default=2, type=int, help="only matters if -s gunicorn."
     )
     argparser.add_argument("--no-splash", action="store_true")
+    argparser.add_argument("--no-ssl", action="store_true")
 
     args = argparser.parse_args()
 
@@ -133,7 +140,8 @@ if __name__ == "__main__":
 
     logger.info("Server %s, bound to %s:%s", args.server, args.host, args.port)
     logger.info("Mapper: %s;", settings.mapper.name)
-    logger.info("SSL; cert: %s; pkey: %s;", args.cert, args.key)
+    if not args.no_ssl:
+        logger.info("SSL; cert: %s; pkey: %s;", args.cert, args.key)
 
     wsgi = get_falcon_api(
         BrokerResource(standard_protocol_creator(settings.mapper)),
@@ -142,7 +150,7 @@ if __name__ == "__main__":
     )
 
     if args.server == "werkzeug":
-        werkzeug_runner(wsgi, args.host, args.port, args.cert, args.key)
+        werkzeug_runner(wsgi, args.host, args.port, args.cert, args.key, args.no_ssl)
     elif args.server == "gunicorn":
         gunicorn_runner(
             wsgi,
@@ -150,10 +158,11 @@ if __name__ == "__main__":
             args.port,
             args.cert,
             args.key,
+            args.no_ssl,
             worker_class=args.gunicorn_worker_class,
             workers=args.gunicorn_workers,
         )
     elif args.server == "cherrypy":
-        cherrypy_runner(wsgi, args.host, args.port, args.cert, args.key)
+        cherrypy_runner(wsgi, args.host, args.port, args.cert, args.key, args.no_ssl)
     else:
         logger.critical("Unknown server type %s", args.server)
