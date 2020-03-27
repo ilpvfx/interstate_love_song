@@ -10,6 +10,8 @@ from urllib3.exceptions import NewConnectionError
 
 logger = logging.getLogger(__name__)
 
+REQUEST_TIMEOUT = 1.0
+
 
 class AllocateSessionStatus(Enum):
     # Protocol status
@@ -40,6 +42,7 @@ def allocate_session(
     domain="",
     client_name: str = "Bobby McGee",
     session_type: str = "UNSPECIFIED",
+    timeout=REQUEST_TIMEOUT,
 ) -> Tuple[AllocateSessionStatus, Optional[AgentSession]]:
     """Contacts a Teradici resource ("the agent"), and tries to acquire a session from it.
 
@@ -115,6 +118,7 @@ def allocate_session(
             "https://{}:60443/pcoip-agent/xml".format(agent_hostname),
             data=request_body.getvalue().decode("utf-8"),
             verify=False,
+            timeout=timeout,
         )
 
         if response.status_code != 200:

@@ -32,7 +32,6 @@ def get_builtin_plugin_modules():
 
 def get_discovered_plugin_modules():
     """Find modules that have defined their entrypoint as interstate_love_song.plugins"""
-    print(__name__, list(pkg_resources.iter_entry_points(__name__)))
     return {
         entry_point.name: entry_point.load()
         for entry_point in pkg_resources.iter_entry_points(__name__)
