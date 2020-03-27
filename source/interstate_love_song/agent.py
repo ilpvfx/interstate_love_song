@@ -10,7 +10,7 @@ from urllib3.exceptions import NewConnectionError
 
 logger = logging.getLogger(__name__)
 
-REQUEST_TIMEOUT = 1.0
+REQUEST_TIMEOUT = 10.0
 
 
 class AllocateSessionStatus(Enum):
