@@ -3,7 +3,6 @@ import logging
 import sys
 
 from interstate_love_song._version import VERSION
-from .http import get_falcon_api, BrokerResource, standard_protocol_creator
 from .settings import Settings, DefaultMapper, load_settings_json
 
 logger = logging.getLogger(__name__)
@@ -138,10 +137,19 @@ if __name__ == "__main__":
         logger.warning("No mapper configured, using default")
         settings.mapper = settings.mapper.create_mapper()
 
+    if args.server in ("gunicorn",) and args.gunicorn_worker_class in ("gevent",):
+        logger.info("Running gevent monkey patch all")
+
+        from gevent import monkey
+
+        monkey.patch_all()
+
     logger.info("Server %s, bound to %s:%s", args.server, args.host, args.port)
     logger.info("Mapper: %s;", settings.mapper.name)
     if not args.no_ssl:
         logger.info("SSL; cert: %s; pkey: %s;", args.cert, args.key)
+
+    from .http import get_falcon_api, BrokerResource, standard_protocol_creator
 
     wsgi = get_falcon_api(
         BrokerResource(standard_protocol_creator(settings.mapper)),
