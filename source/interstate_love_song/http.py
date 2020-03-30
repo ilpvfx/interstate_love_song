@@ -28,7 +28,7 @@ def standard_protocol_creator(mapper: Mapper):
     """Curries a creator function with the given mapper. The creator returns a BrokerProtocolHandler."""
 
     def creator():
-        return BrokerProtocolHandler(mapper)
+        return BrokerProtocolHandler(mapper, mapper.allocate_session)
 
     return creator
 

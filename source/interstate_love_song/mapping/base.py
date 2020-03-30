@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
 from typing import Tuple, Optional, Sequence, Any, Mapping
+from ..agent import allocate_session
 
 Credentials = Tuple[str, str]
 
@@ -44,6 +45,10 @@ class Mapper(ABC):
             a tuple of a MapperStatus and a sequence, the sequence shall be empty unless the status is SUCCESS.
         """
         pass
+
+    def allocate_session(self, *args, **kwargs):
+        """This adds the ability for plugin mappers to intercept the call to `agent.allocate_session`"""
+        return allocate_session(*args, **kwargs)
 
     @property
     @abstractmethod

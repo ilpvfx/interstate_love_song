@@ -128,6 +128,13 @@ if __name__ == "__main__":
 
     logging.basicConfig(level=logging.INFO)
 
+    if args.server in ("gunicorn",) and args.gunicorn_worker_class in ("gevent",):
+        logger.info("Running gevent monkey patch all")
+
+        from gevent import monkey
+
+        monkey.patch_all()
+
     settings = Settings()
     if args.config:
         with open(args.config, "r") as f:
@@ -136,13 +143,6 @@ if __name__ == "__main__":
     if settings.mapper is DefaultMapper:
         logger.warning("No mapper configured, using default")
         settings.mapper = settings.mapper.create_mapper()
-
-    if args.server in ("gunicorn",) and args.gunicorn_worker_class in ("gevent",):
-        logger.info("Running gevent monkey patch all")
-
-        from gevent import monkey
-
-        monkey.patch_all()
 
     logger.info("Server %s, bound to %s:%s", args.server, args.host, args.port)
     logger.info("Mapper: %s;", settings.mapper.name)
