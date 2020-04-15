@@ -97,7 +97,7 @@ def print_logo():
     sys.stdout.flush()
 
 
-if __name__ == "__main__":
+def main():
     argparser = argparse.ArgumentParser("interstate_love_song")
     argparser.add_argument(
         "-s", "--server", choices=["werkzeug", "gunicorn", "cherrypy"], default="gunicorn"
@@ -174,3 +174,7 @@ if __name__ == "__main__":
         cherrypy_runner(wsgi, args.host, args.port, args.cert, args.key, args.no_ssl)
     else:
         logger.critical("Unknown server type %s", args.server)
+
+
+if __name__ == "__main__":
+    main()
