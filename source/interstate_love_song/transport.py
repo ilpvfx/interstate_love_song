@@ -110,7 +110,7 @@ class AllocateResourceSuccessResponse(Message):
     port: int
     session_id: str
     connect_tag: str
-    resource_id: int
+    resource_id: str
     protocol: str = "PCOIP"
 
 

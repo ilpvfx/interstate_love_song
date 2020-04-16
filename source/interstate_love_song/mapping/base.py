@@ -23,7 +23,7 @@ class Resource:
     hostname: str
 
 
-MapperResult = Tuple[MapperStatus, Sequence[Resource]]
+MapperResult = Tuple[MapperStatus, Mapping[str, Resource]]
 
 
 class Mapper(ABC):
@@ -42,7 +42,7 @@ class Mapper(ABC):
         :raises TypeError:
             credentials could not be unpacked into two values.
         :returns:
-            a tuple of a MapperStatus and a sequence, the sequence shall be empty unless the status is SUCCESS.
+            a tuple of a MapperStatus and a dict, the dict shall be empty unless the status is SUCCESS.
         """
         pass
 
