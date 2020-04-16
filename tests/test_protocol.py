@@ -31,11 +31,11 @@ class DummyMapper(Mapper):
         usr, psw = credentials
         if usr == self.username and psw == self.password:
             if not self.resources:
-                return MapperStatus.NO_MACHINE, []
+                return MapperStatus.NO_MACHINE, {}
             else:
-                return MapperStatus.SUCCESS, self.resources
+                return MapperStatus.SUCCESS, dict((str(k), v) for k, v in enumerate(self.resources))
         else:
-            return MapperStatus.AUTHENTICATION_FAILED, []
+            return MapperStatus.AUTHENTICATION_FAILED, {}
 
 
 @dataclass
@@ -135,7 +135,7 @@ def test_broker_protocol_handler_call_waiting_for_authenticate_authenticate_succ
     assert isinstance(session_data, ProtocolSession)
     assert session_data.username == ctx.mapper.username
     assert session_data.password == ctx.mapper.password
-    assert list(session_data.resources) == ctx.mapper.resources
+    assert list(session_data.resources.values()) == ctx.mapper.resources
 
     assert ctx.mapper.map_called is True
 
@@ -215,7 +215,7 @@ def test_broker_protocol_handler_call_waiting_for_authenticate_other_message(ctx
 def test_broker_protocol_handler_call_waiting_for_getresourcelist_getresourcelist(ctx: Fixture):
     bph = BrokerProtocolHandler(ctx.mapper)
 
-    resources = [Resource("Kurt", "Gödel"), Resource("Paul", "Dirac")]
+    resources = {"0": Resource("Kurt", "Gödel"), "1": Resource("Paul", "Dirac")}
 
     session_data, response = bph(
         GetResourceListRequest(),
@@ -228,12 +228,12 @@ def test_broker_protocol_handler_call_waiting_for_getresourcelist_getresourcelis
     )
 
     assert session_data.state == ProtocolState.WAITING_FOR_ALLOCATERESOURCE
-
+    # print(response)
     assert isinstance(response, GetResourceListResponse)
     assert len(response.resources) == len(resources)
-    assert response.resources[0].resource_name == resources[0].name
+    assert response.resources[0].resource_name == resources["0"].name
     assert response.resources[0].resource_id == "0"
-    assert response.resources[1].resource_name == resources[1].name
+    assert response.resources[1].resource_name == resources["1"].name
     assert response.resources[1].resource_id == "1"
 
     assert isinstance(session_data, ProtocolSession)

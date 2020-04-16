@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 import dataclasses
 import argparse
 
@@ -59,11 +60,11 @@ class SimpleMapper(Mapper):
 
         if usr == self.username and hash_pass(psw) == self._password_hash:
             if self._resources:
-                return MapperStatus.SUCCESS, list(self.resources)
+                return MapperStatus.SUCCESS, dict((str(k), v) for k, v in enumerate(self.resources))
             else:
-                return MapperStatus.NO_MACHINE, []
+                return MapperStatus.NO_MACHINE, {}
         else:
-            return MapperStatus.AUTHENTICATION_FAILED, []
+            return MapperStatus.AUTHENTICATION_FAILED, {}
 
     @property
     def name(self):

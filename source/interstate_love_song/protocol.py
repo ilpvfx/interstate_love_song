@@ -2,7 +2,7 @@ import socket
 import logging
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Sequence, Tuple, Optional, Callable
+from typing import Mapping, Sequence, Tuple, Optional, Callable
 
 from interstate_love_song import agent
 from interstate_love_song.agent import AllocateSessionStatus
@@ -47,7 +47,7 @@ class ProtocolSession:
     username: Optional[str] = None
     password: Optional[str] = None
     state: ProtocolState = ProtocolState.WAITING_FOR_HELLO
-    resources: Sequence[Resource] = field(default_factory=lambda: [])
+    resources: Mapping[str, Resource] = field(default_factory=lambda: {})
 
 
 ProtocolAction = Tuple[Optional[ProtocolSession], Optional[Message]]
@@ -173,7 +173,7 @@ class BrokerProtocolHandler:
             session.username = None
             session.password = None
             session.state = ProtocolState.WAITING_FOR_AUTHENTICATE
-            session.resources = []
+            session.resources = {}
             return session, AuthenticateFailedResponse()
 
     def _get_resource_list(
@@ -184,14 +184,15 @@ class BrokerProtocolHandler:
         """
         _assert_session_exist(session)
         session.state = ProtocolState.WAITING_FOR_ALLOCATERESOURCE
-
-        def teradicis():
-            i = 0
-            for resource in session.resources:
-                yield TeradiciResource(resource.name, str(i))
-                i += 1
-
-        return session, GetResourceListResponse(list(teradicis()))
+        return (
+            session,
+            GetResourceListResponse(
+                [
+                    TeradiciResource(resource.name, resource_id)
+                    for resource_id, resource in session.resources.items()
+                ]
+            ),
+        )
 
     def _allocate_resource(
         self, msg: AllocateResourceRequest, session: Optional[ProtocolSession]
@@ -218,7 +219,7 @@ class BrokerProtocolHandler:
                     port=agent_session.port,
                     session_id=agent_session.session_id,
                     connect_tag=agent_session.session_tag,
-                    resource_id=int(agent_session.resource_id),
+                    resource_id=agent_session.resource_id,
                 ),
             )
         else:

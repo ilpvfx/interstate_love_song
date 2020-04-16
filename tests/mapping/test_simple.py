@@ -52,4 +52,4 @@ def test_simple_mapper_map():
     status, hosts = mapper.map(("Euler", "Leonhard"))
 
     assert status == MapperStatus.SUCCESS
-    assert list(hosts) == expected_hosts
+    assert hosts == dict((str(k), v) for k, v in enumerate(expected_hosts))
