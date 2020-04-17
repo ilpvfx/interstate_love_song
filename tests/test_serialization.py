@@ -313,25 +313,7 @@ def test_deserialize_message_allocate_resource():
     msg = deserialize_message(fromstring(xml))
 
     assert isinstance(msg, AllocateResourceRequest)
-    assert msg.resource_id == 666
-
-
-def test_deserialize_message_allocate_resource_not_integer():
-    xml = """<?xml version="1.0" encoding="utf-8"?>
-    <pcoip-client version="2.1">
-      <allocate-resource>
-        <resource-id>Not an integer</resource-id>
-        <protocol>PCOIP</protocol>
-        <client-info>
-          <ip-address>::1</ip-address>
-          <mac-address>00:00:00:00:00:00</mac-address>
-        </client-info>
-      </allocate-resource>
-    </pcoip-client>
-    """
-    msg = deserialize_message(fromstring(xml))
-
-    assert isinstance(msg, BadMessage)
+    assert msg.resource_id == "666"
 
 
 def test_deserialize_message_bye():

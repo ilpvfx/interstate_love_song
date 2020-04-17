@@ -96,7 +96,7 @@ class AllocateResourceRequest(Message):
     """The PCOIP-client has chosen a resource and asks the broker to allocate it for us. The broker must then ask the
     resource for a session id, and answer with it."""
 
-    resource_id: int
+    resource_id: str
 
 
 @dataclass

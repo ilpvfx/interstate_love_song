@@ -169,7 +169,7 @@ def test_broker_protocol_handler_call_waiting_for_authenticate_authenticate_no_r
 def test_broker_protocol_handler_call_waiting_for_authenticate_authenticate_failed(ctx: Fixture):
     bph = BrokerProtocolHandler(ctx.mapper)
 
-    ctx.mapper.resources = [Resource("Kurt", "Gödel")]
+    ctx.mapper.resources = {"0": Resource("Kurt", "Gödel")}
 
     session_data, response = bph(
         AuthenticateRequest(ctx.mapper.username, ctx.mapper.password + "wrong"),
@@ -282,12 +282,12 @@ def test_broker_protocol_handler_call_waiting_for_allocateresource_allocateresou
         "Leonhard",
         "Euler",
         state=ProtocolState.WAITING_FOR_ALLOCATERESOURCE,
-        resources=[Resource("Hilbert", "hilbert.gov")],
+        resources={"0": Resource("Hilbert", "hilbert.gov")},
     )
 
     bph = BrokerProtocolHandler(ctx.mapper, allocate_session=allocate_session)
 
-    session_data, response = bph(AllocateResourceRequest(resource_id=0), protocol_session)
+    session_data, response = bph(AllocateResourceRequest(resource_id="0"), protocol_session)
 
     assert isinstance(response, AllocateResourceFailureResponse)
     # TODO: We should use the proper response here.
@@ -307,12 +307,12 @@ def test_broker_protocol_handler_call_waiting_for_allocateresource_allocateresou
         "Leonhard",
         "Euler",
         state=ProtocolState.WAITING_FOR_ALLOCATERESOURCE,
-        resources=[Resource("Hilbert", "hilbert.gov")],
+        resources={"0": Resource("Hilbert", "hilbert.gov")},
     )
 
     bph = BrokerProtocolHandler(ctx.mapper, allocate_session=allocate_session)
 
-    session_data, response = bph(AllocateResourceRequest(resource_id=0), protocol_session)
+    session_data, response = bph(AllocateResourceRequest(resource_id="0"), protocol_session)
 
     assert isinstance(response, AllocateResourceFailureResponse)
     assert response.result_id == "FAILED_USER_AUTH"
@@ -331,12 +331,12 @@ def test_broker_protocol_handler_call_waiting_for_allocateresource_allocateresou
         "Leonhard",
         "Euler",
         state=ProtocolState.WAITING_FOR_ALLOCATERESOURCE,
-        resources=[Resource("Hilbert", "hilbert.gov")],
+        resources={"0": Resource("Hilbert", "hilbert.gov")},
     )
 
     bph = BrokerProtocolHandler(ctx.mapper, allocate_session=allocate_session)
 
-    session_data, response = bph(AllocateResourceRequest(resource_id=0), protocol_session)
+    session_data, response = bph(AllocateResourceRequest(resource_id="0"), protocol_session)
 
     assert isinstance(response, AllocateResourceFailureResponse)
     assert response.result_id == "FAILED_ANOTHER_SESION_STARTED"

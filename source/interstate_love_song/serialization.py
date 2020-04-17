@@ -244,7 +244,7 @@ def _deserialize_message_allocate_resource(request_xml: Element) -> Message:
         return BadMessage("No resource-id element.")
 
     try:
-        return AllocateResourceRequest(int(resource_id.text))
+        return AllocateResourceRequest(resource_id.text)
     except ValueError:
         return BadMessage("resource-id was not an integer.")
 
