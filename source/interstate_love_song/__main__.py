@@ -3,7 +3,6 @@ import logging
 import sys
 
 from interstate_love_song._version import VERSION
-from .settings import Settings, DefaultMapper, load_settings_json
 
 logger = logging.getLogger(__name__)
 
@@ -134,6 +133,8 @@ def main():
         from gevent import monkey
 
         monkey.patch_all()
+
+    from .settings import Settings, DefaultMapper, load_settings_json
 
     settings = Settings()
     if args.config:
