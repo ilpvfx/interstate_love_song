@@ -146,18 +146,42 @@ class BrokerResource:
     def on_get(self, req, resp):
         data = """
         <html>
-        <head><title>Interstate Love Song</title></head>
+        <head>
+            <title>Interstate Love Song</title>
+            <style>
+                body {
+                    font-family: sans-serif;
+                    height: 100%;
+                    background: lightgray;
+                    color: gray;
+                }
+                .container {
+                    height: 100%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+                h1 {
+                    font-size: 2em;
+                }
+                h2 {
+                    position: relative;
+                    top: 1.5em;
+                    right: 1em;
+                }
+            </style>
+        </head>
         <body>
-            <div style="position: absolute; left: calc(50vw - 150px);">
-                <img src="data:image/jpeg;base64,{hacker_base64}" />
-                <p>
+            <div class="container">
+                <h1>Interstate Love Song</h1>
+                <h2>
                     v{version}
-                </p>
+                </h2>
             </div>
         </body>
         </html>
         """.format(
-            hacker_base64=static.hacker_img, version=VERSION
+            version=VERSION
         )
 
         resp.content_type = falcon.MEDIA_HTML
