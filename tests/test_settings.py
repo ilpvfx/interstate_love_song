@@ -140,6 +140,7 @@ def test_load_settings_json():
         password_hash="Gödel",
         resource_name="Kurt's Machine",
         resource_hostname="kurt.godel.edu",
+        domains=['example.com']
     )
 
     raw_settings_json = """
@@ -151,7 +152,8 @@ def test_load_settings_json():
                 "resources": [{{
                     "name": "{mapper.resource_name}",
                     "hostname": "{mapper.resource_hostname}"
-                }}]
+                }}],
+                "domains": "{mapper.domains}"
             }}
         }},
         "logging": {{

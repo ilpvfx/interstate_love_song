@@ -52,6 +52,12 @@ class Mapper(ABC):
 
     @property
     @abstractmethod
+    def domains():
+        """Return a list of supported domains"""
+        pass
+
+    @property
+    @abstractmethod
     def name(self):
         """The name of this mapper."""
         pass

@@ -45,8 +45,8 @@ def test_broker_resource_on_post_bad_xml():
 def test_broker_resource_on_post_sets_session():
     def dummy_protocol(msg, data):
         return (
-            ProtocolSession("leonhard", "euler", state=ProtocolState.WAITING_FOR_HELLO),
-            HelloResponse("lagrange"),
+            ProtocolSession("leonhard", "euler", state=ProtocolState.WAITING_FOR_HELLO, domain="example.com"),
+            HelloResponse("lagrange", ["example.com"]),
         )
 
     session_setter = DummySessionSetter()
@@ -63,11 +63,12 @@ def test_broker_resource_on_post_sets_session():
     assert session_setter.data is not None
     assert session_setter.data.username == "leonhard"
     assert session_setter.data.password == "euler"
+    assert session_setter.data.domain == "example.com"
 
 
 def test_broker_resource_on_post_clears_session():
     def terminate_protocol(msg, data):
-        return None, HelloResponse("lagrange")
+        return None, HelloResponse("lagrange", ["example.com"])
 
     session_setter = DummySessionSetter()
 
@@ -89,7 +90,7 @@ def test_broker_resource_deserializes():
 
     def terminate_protocol(in_msg, data):
         assert in_msg is msg
-        return None, HelloResponse("lagrange")
+        return None, HelloResponse("lagrange", ["example.com"])
 
     check = Namespace(deserialize_called=False)
 
@@ -115,7 +116,7 @@ def test_broker_resource_deserializes():
 
 def test_broker_resource_serializes():
     in_msg = HelloRequest("euler.lagrange.edu", "Abel")
-    out_msg = HelloResponse("lagrange")
+    out_msg = HelloResponse("lagrange", ["example.com"])
 
     def terminate_protocol(ignored, data):
         return None, out_msg

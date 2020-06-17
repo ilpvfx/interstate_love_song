@@ -15,15 +15,20 @@ class DummyMapper(Mapper):
     def name(self):
         return "DummyMapper"
 
+    @property
+    def domains(self):
+        return ['example.com']
+
     @classmethod
     def create_from_settings(cls, settings):
         return cls()
 
-    def __init__(self, username="test", password="test", resources=[]):
+    def __init__(self, username="test", password="test", resources=[], domain="example.com"):
         super().__init__()
         self.username = username
         self.password = password
         self.resources = resources
+        self.domain = domain
         self.map_called = False
 
     def map(self, credentials: Credentials, previous_host: Optional[str] = None) -> MapperResult:
@@ -40,7 +45,7 @@ class DummyMapper(Mapper):
 
 @dataclass
 class Fixture:
-    mapper: DummyMapper = DummyMapper("user", "pass", [])
+    mapper: DummyMapper = DummyMapper("user", "pass", [], 'example.com')
 
 
 @pytest.fixture
@@ -109,7 +114,7 @@ def test_broker_protocol_handler_call_waiting_for_hello_other_message(ctx: Fixtu
     bph = BrokerProtocolHandler(ctx.mapper)
 
     session_data, response = bph(
-        AuthenticateRequest("Leonhard", "Euler"),
+        AuthenticateRequest("Leonhard", "Euler", "example.com"),
         ProtocolSession(state=ProtocolState.WAITING_FOR_HELLO),
     )
 
@@ -124,7 +129,7 @@ def test_broker_protocol_handler_call_waiting_for_authenticate_authenticate_succ
     ctx.mapper.resources = [Resource("Kurt", "Gödel")]
 
     session_data, response = bph(
-        AuthenticateRequest(ctx.mapper.username, ctx.mapper.password),
+        AuthenticateRequest(ctx.mapper.username, ctx.mapper.password, ctx.mapper.domain,),
         ProtocolSession(state=ProtocolState.WAITING_FOR_AUTHENTICATE),
     )
 
@@ -148,7 +153,7 @@ def test_broker_protocol_handler_call_waiting_for_authenticate_authenticate_no_r
     ctx.mapper.resources = []
 
     session_data, response = bph(
-        AuthenticateRequest(ctx.mapper.username, ctx.mapper.password),
+        AuthenticateRequest(ctx.mapper.username, ctx.mapper.password, ctx.mapper.domain),
         ProtocolSession(state=ProtocolState.WAITING_FOR_AUTHENTICATE),
     )
 
@@ -172,7 +177,7 @@ def test_broker_protocol_handler_call_waiting_for_authenticate_authenticate_fail
     ctx.mapper.resources = {"0": Resource("Kurt", "Gödel")}
 
     session_data, response = bph(
-        AuthenticateRequest(ctx.mapper.username, ctx.mapper.password + "wrong"),
+        AuthenticateRequest(ctx.mapper.username, ctx.mapper.password + "wrong", ctx.mapper.domain),
         ProtocolSession(state=ProtocolState.WAITING_FOR_AUTHENTICATE),
     )
 

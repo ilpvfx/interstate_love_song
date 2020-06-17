@@ -24,7 +24,7 @@ def test_serialize_message_bad_argument():
 
 
 def test_serialize_message_hello_response():
-    msg = HelloResponse(hostname="euler.test")
+    msg = HelloResponse(hostname="euler.test", domains=["example.com"])
 
     expected = """<?xml version="1.0"?>
     <pcoip-client version="2.1">
