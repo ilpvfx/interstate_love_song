@@ -65,4 +65,4 @@ class Mapper(ABC):
     @classmethod
     def create_from_dict(cls, data: Mapping[str, Any]):
         """Create a new instance from settings"""
-        cls()
+        return cls()
