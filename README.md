@@ -109,6 +109,8 @@ The Simple Mapper is mostly for testing and to serve as a reference implementati
 
 `resources`: Sequence[Resource]; the resources to present (`[]`)
 
+`domains`: Sequence[str]; list of available domains
+
 **Example Config for SimpleMapper**
 For example:
 ```json
@@ -131,7 +133,8 @@ For example:
           "name": "Marlon Brando",
           "hostname": "localhost"
         }
-      ]
+      ],
+      "domains": ["example.com"]
     }
   }
 }

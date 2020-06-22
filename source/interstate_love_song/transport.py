@@ -26,15 +26,15 @@ class HelloResponse(Message):
     """
 
     hostname: str
+    domains: Sequence[str]
     product_name: str = "Interstate Love Song"
     product_version: str = VERSION
     platform: str = "linux"
     locale: str = "en_US"
-    ip_address: str = "N/A"
+    ip_address: str = "N/A"    
     authentication_methods: Sequence[str] = field(
         default_factory=lambda: ["AUTHENTICATE_VIA_PASSWORD"]
     )
-    domains: Sequence[str] = field(default_factory=lambda: ["example.com"])
 
 
 @dataclass
@@ -46,9 +46,10 @@ class AuthenticateRequest(Message):
 
     username: str
     password: str
+    domain: str
 
     def __repr__(self):
-        return f"AuthenticateRequest(username={self.username!r}, password=<redacted>)"
+        return f"AuthenticateRequest(username={self.username!r}, password=<redacted>, domain={self.domain!r})"
 
 
 @dataclass

@@ -46,6 +46,7 @@ class ProtocolSession:
 
     username: Optional[str] = None
     password: Optional[str] = None
+    domain: Optional[str] = None
     state: ProtocolState = ProtocolState.WAITING_FOR_HELLO
     resources: Mapping[str, Resource] = field(default_factory=lambda: {})
 
@@ -144,7 +145,7 @@ class BrokerProtocolHandler:
         - A hello with the clients real product name, that's when we want our session to start.
         """
         hostname = socket.gethostname()
-        response = HelloResponse(hostname)
+        response = HelloResponse(hostname, domains=self.mapper.domains)
         # The PCOIP-client sends a hello with this as the product name to check if we are connecting to a broker
         # or to a machine. We want to stay in the WAITING_FOR_HELLO state in those cases.
         if msg.client_product_name == "QueryBrokerClient":
@@ -166,6 +167,8 @@ class BrokerProtocolHandler:
         if mapper_status == MapperStatus.SUCCESS:
             session.username = msg.username
             session.password = msg.password
+            session.domain = msg.domain
+
             session.state = ProtocolState.WAITING_FOR_GETRESOURCELIST
             session.resources = resources
             return session, AuthenticateSuccessResponse()
@@ -204,7 +207,7 @@ class BrokerProtocolHandler:
 
         hostname = session.resources[msg.resource_id].hostname
         status, agent_session = self._allocate_session(
-            msg.resource_id, hostname, session.username, session.password
+            msg.resource_id, hostname, session.username, session.password, session.domain
         )
 
         if status == AllocateSessionStatus.SUCCESSFUL:

@@ -7,7 +7,7 @@ from interstate_love_song.agent import allocate_session, AllocateSessionStatus
 
 @httpretty.activate
 def test_allocate_session_host_unreachable():
-    status, result = allocate_session("123", "127.255.255.255", username="Paul", password="Dirac")
+    status, result = allocate_session("123", "127.255.255.255", username="Paul", password="Dirac", domain='example.com')
     assert result is None
     assert status == AllocateSessionStatus.CONNECTION_ERROR
 
@@ -21,7 +21,7 @@ def test_allocate_session_host_404():
         status=404,
     )
 
-    status, result = allocate_session("123", "euler.edu", username="Paul", password="Dirac")
+    status, result = allocate_session("123", "euler.edu", username="Paul", password="Dirac", domain='example.com')
     assert result is None
     assert status == AllocateSessionStatus.ENDPOINT_ERROR
 

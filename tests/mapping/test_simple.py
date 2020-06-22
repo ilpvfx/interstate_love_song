@@ -7,23 +7,26 @@ from interstate_love_song.plugins.simple import hash_pass, MapperStatus, Resourc
 
 def test_simple_mapper_constructor_bad_arguments():
     with pytest.raises(TypeError):
-        SimpleMapper("Abcdef", "Euler", 123)
+        SimpleMapper("Abcdef", "Euler", 123, [])
 
+    with pytest.raises(TypeError):
+        SimpleMapper("Abcdef", "Euler", [Resource("kolmogorov", "kolmogorov.ru")], 4)
 
 def test_simple_mapper_constructor():
-    mapper = SimpleMapper(123, 123, [Resource("kolmogorov", "kolmogorov.ru")])
+    mapper = SimpleMapper(123, 123, [Resource("kolmogorov", "kolmogorov.ru")], ["example.com"])
     assert mapper.username == "123"
     assert mapper.password_hash == "123"
     assert list(mapper.resources) == [Resource("kolmogorov", "kolmogorov.ru")]
+    assert mapper.domains == ["example.com"]
 
 
 def test_simple_mapper_constructor_accepts_no_resources():
-    mapper = SimpleMapper("Euler", "Leonhard", [])
+    mapper = SimpleMapper("Euler", "Leonhard", [], [])
     assert list(mapper.resources) == []
 
 
 def test_simple_mapper_map_bad_arguments():
-    mapper = SimpleMapper("Euler", "Leonhard", [])
+    mapper = SimpleMapper("Euler", "Leonhard", [], [])
     with pytest.raises(ValueError):
         mapper.map((123, "Leonhard"))
     with pytest.raises(ValueError):
@@ -31,7 +34,7 @@ def test_simple_mapper_map_bad_arguments():
 
 
 def test_simple_mapper_map_no_resources():
-    mapper = SimpleMapper("Euler", hash_pass("Leonhard"), [])
+    mapper = SimpleMapper("Euler", hash_pass("Leonhard"), [], [])
     status, resources = mapper.map(("Euler", "Leonhard"))
 
     assert status == MapperStatus.NO_MACHINE
@@ -39,7 +42,7 @@ def test_simple_mapper_map_no_resources():
 
 
 def test_simple_mapper_map_bad_credentials():
-    mapper = SimpleMapper("Euler", hash_pass("Leonhard"), [])
+    mapper = SimpleMapper("Euler", hash_pass("Leonhard"), [], [])
     status, hosts = mapper.map(("Euler", "wrong"))
 
     assert status == MapperStatus.AUTHENTICATION_FAILED
@@ -48,7 +51,7 @@ def test_simple_mapper_map_bad_credentials():
 
 def test_simple_mapper_map():
     expected_hosts = [Resource(host, host) for host in ("abc.gov", "123.edu")]
-    mapper = SimpleMapper("Euler", hash_pass("Leonhard"), expected_hosts)
+    mapper = SimpleMapper("Euler", hash_pass("Leonhard"), expected_hosts, [])
     status, hosts = mapper.map(("Euler", "Leonhard"))
 
     assert status == MapperStatus.SUCCESS

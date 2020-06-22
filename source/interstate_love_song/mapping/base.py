@@ -52,6 +52,12 @@ class Mapper(ABC):
 
     @property
     @abstractmethod
+    def domains():
+        """Return a list of supported domains"""
+        pass
+
+    @property
+    @abstractmethod
     def name(self):
         """The name of this mapper."""
         pass
@@ -59,4 +65,4 @@ class Mapper(ABC):
     @classmethod
     def create_from_dict(cls, data: Mapping[str, Any]):
         """Create a new instance from settings"""
-        cls()
+        return cls()

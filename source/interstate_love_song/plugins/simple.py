@@ -21,12 +21,13 @@ class SimpleMapperSettings:
     username: str = "test"
     password_hash: str = "change_me"
     resources: Sequence[Resource] = dataclasses.field(default_factory=lambda: [])
+    domains: Sequence[str] = dataclasses.field(default_factory=lambda: [])
 
 
 class SimpleMapper(Mapper):
     """A very simple mapper that accepts one set of credentials and returns a given set of resources."""
 
-    def __init__(self, username: str, password_hash: str, resources: Sequence[Resource]):
+    def __init__(self, username: str, password_hash: str, resources: Sequence[Resource], domains: Sequence[str]):
         """
 
         :param username:
@@ -34,12 +35,15 @@ class SimpleMapper(Mapper):
         :param password_hash:
             A password hash, output from hash_pass.
         :param resources:
+        :param domains:
+            A list of valid domains.
         :raises TypeError:
         """
         super().__init__()
         self._username = str(username)
         self._password_hash = str(password_hash)
         self._resources = list(resources)
+        self._domains = list(domains)
 
     @property
     def username(self) -> str:
@@ -67,6 +71,11 @@ class SimpleMapper(Mapper):
             return MapperStatus.AUTHENTICATION_FAILED, {}
 
     @property
+    def domains(self):
+        return self._domains
+
+
+    @property
     def name(self):
         return "SimpleMapper"
 
@@ -75,7 +84,7 @@ class SimpleMapper(Mapper):
         from interstate_love_song.settings import load_dict_into_dataclass
 
         settings = load_dict_into_dataclass(SimpleMapperSettings, data)
-        return cls(settings.username, settings.password_hash, settings.resources)
+        return cls(settings.username, settings.password_hash, settings.resources, settings.domains)
 
 
 if __name__ == "__main__":

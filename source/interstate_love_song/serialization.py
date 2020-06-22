@@ -227,11 +227,12 @@ def _deserialize_hello(request_xml: Element) -> Message:
 def _deserialize_authenticate(request_xml: Element) -> Message:
     username = request_xml.find("username")
     password = request_xml.find("password")
+    domain = request_xml.find("domain")
 
     if username is None or password is None:
         return BadMessage("Missing either username or password element.")
 
-    return AuthenticateRequest(username.text, password.text)
+    return AuthenticateRequest(username.text, password.text, domain.text)
 
 
 def _deserialize_message_get_resource_list(request_xml: Element) -> Message:

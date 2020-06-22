@@ -39,7 +39,7 @@ def allocate_session(
     agent_hostname: str,
     username: str,
     password: str,
-    domain="",
+    domain: str,
     client_name: str = "Bobby McGee",
     session_type: str = "UNSPECIFIED",
     timeout=REQUEST_TIMEOUT,
