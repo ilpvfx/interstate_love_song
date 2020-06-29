@@ -111,15 +111,9 @@ class BrokerProtocolHandler:
 
         routing_table = {
             ProtocolState.WAITING_FOR_HELLO: (HelloRequest, self._hello),
-            ProtocolState.WAITING_FOR_AUTHENTICATE: (AuthenticateRequest, self._authenticate),
-            ProtocolState.WAITING_FOR_GETRESOURCELIST: (
-                GetResourceListRequest,
-                self._get_resource_list,
-            ),
-            ProtocolState.WAITING_FOR_ALLOCATERESOURCE: (
-                AllocateResourceRequest,
-                self._allocate_resource,
-            ),
+            ProtocolState.WAITING_FOR_AUTHENTICATE: (AuthenticateRequest, self._authenticate,),
+            ProtocolState.WAITING_FOR_GETRESOURCELIST: (GetResourceListRequest, self._get_resource_list,),
+            ProtocolState.WAITING_FOR_ALLOCATERESOURCE: (AllocateResourceRequest, self._allocate_resource,),
         }
 
         state = ProtocolState.WAITING_FOR_HELLO if session is None else session.state
@@ -151,11 +145,12 @@ class BrokerProtocolHandler:
         if msg.client_product_name == "QueryBrokerClient":
             return None, response
         else:
-            return ProtocolSession(state=ProtocolState.WAITING_FOR_AUTHENTICATE), response
+            return (
+                ProtocolSession(state=ProtocolState.WAITING_FOR_AUTHENTICATE),
+                response,
+            )
 
-    def _authenticate(
-        self, msg: AuthenticateRequest, session: Optional[ProtocolSession]
-    ) -> ProtocolAction:
+    def _authenticate(self, msg: AuthenticateRequest, session: Optional[ProtocolSession]) -> ProtocolAction:
         """We only expect authenticate messages here. When we get one, we ask the mapper to authenticate and return
         the assigned resources.
 
@@ -179,9 +174,7 @@ class BrokerProtocolHandler:
             session.resources = {}
             return session, AuthenticateFailedResponse()
 
-    def _get_resource_list(
-        self, msg: GetResourceListRequest, session: Optional[ProtocolSession]
-    ) -> ProtocolAction:
+    def _get_resource_list(self, msg: GetResourceListRequest, session: Optional[ProtocolSession]) -> ProtocolAction:
         """This means authentication was successful. We have already assigned resources, those are in the session, so we
         can just return those. We need to be careful with resource IDs.
         """
@@ -190,16 +183,11 @@ class BrokerProtocolHandler:
         return (
             session,
             GetResourceListResponse(
-                [
-                    TeradiciResource(resource.name, resource_id)
-                    for resource_id, resource in session.resources.items()
-                ]
+                [TeradiciResource(resource.name, resource_id) for resource_id, resource in session.resources.items()]
             ),
         )
 
-    def _allocate_resource(
-        self, msg: AllocateResourceRequest, session: Optional[ProtocolSession]
-    ) -> ProtocolAction:
+    def _allocate_resource(self, msg: AllocateResourceRequest, session: Optional[ProtocolSession]) -> ProtocolAction:
         """The client should now ask us to allocate a session on a chosen machine. So we need to communicate with the
         machine and obtain a session.
         """
@@ -207,7 +195,7 @@ class BrokerProtocolHandler:
 
         hostname = session.resources[msg.resource_id].hostname
         status, agent_session = self._allocate_session(
-            msg.resource_id, hostname, session.username, session.password, session.domain
+            msg.resource_id, hostname, session.username, session.password, session.domain,
         )
 
         if status == AllocateSessionStatus.SUCCESSFUL:

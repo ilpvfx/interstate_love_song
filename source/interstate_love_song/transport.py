@@ -31,10 +31,8 @@ class HelloResponse(Message):
     product_version: str = VERSION
     platform: str = "linux"
     locale: str = "en_US"
-    ip_address: str = "N/A"    
-    authentication_methods: Sequence[str] = field(
-        default_factory=lambda: ["AUTHENTICATE_VIA_PASSWORD"]
-    )
+    ip_address: str = "N/A"
+    authentication_methods: Sequence[str] = field(default_factory=lambda: ["AUTHENTICATE_VIA_PASSWORD"])
 
 
 @dataclass

@@ -95,9 +95,7 @@ class BrokerResource:
         :raise ValueError:
             A parameter was not callable.
         """
-        if not all(
-            map(callable, [protocol_creator, serialize, deserialize, session_setter_creator])
-        ):
+        if not all(map(callable, [protocol_creator, serialize, deserialize, session_setter_creator],)):
             raise ValueError("A parameter was not callable.")
         self._protocol_creator = protocol_creator
         self._serialize = serialize
@@ -125,9 +123,7 @@ class BrokerResource:
                 logger.warning(
                     "protocol returned None as the response, this MIGHT mean sessions are not working as they should."
                 )
-                raise falcon.HTTPInternalServerError(
-                    description="Unexpected message received, probably a bug."
-                )
+                raise falcon.HTTPInternalServerError(description="Unexpected message received, probably a bug.")
 
             f = BytesIO()
             ElementTree(self._serialize(out_msg)).write(f, encoding="utf-8", xml_declaration=True)
@@ -212,9 +208,7 @@ class FallbackSessionMiddleware(BeakerSessionMiddleware):
         if not session:
             return
 
-        return super(FallbackSessionMiddleware, self).process_request(
-            request, response, resource, request_succeded
-        )
+        return super(FallbackSessionMiddleware, self).process_request(request, response, resource, request_succeded)
 
 
 class CookieCaseFixedResponse(falcon.Response):
@@ -237,9 +231,7 @@ class CookieCaseFixedResponse(falcon.Response):
 
 
 def get_falcon_api(
-    broker_resource: BrokerResource,
-    settings: Settings = Settings(),
-    use_fallback_sessions: bool = False,
+    broker_resource: BrokerResource, settings: Settings = Settings(), use_fallback_sessions: bool = False,
 ) -> API:
     logging.basicConfig(level=settings.logging.level.value)
 

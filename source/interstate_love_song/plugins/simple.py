@@ -27,7 +27,9 @@ class SimpleMapperSettings:
 class SimpleMapper(Mapper):
     """A very simple mapper that accepts one set of credentials and returns a given set of resources."""
 
-    def __init__(self, username: str, password_hash: str, resources: Sequence[Resource], domains: Sequence[str]):
+    def __init__(
+        self, username: str, password_hash: str, resources: Sequence[Resource], domains: Sequence[str],
+    ):
         """
 
         :param username:
@@ -64,7 +66,10 @@ class SimpleMapper(Mapper):
 
         if usr == self.username and hash_pass(psw) == self._password_hash:
             if self._resources:
-                return MapperStatus.SUCCESS, dict((str(k), v) for k, v in enumerate(self.resources))
+                return (
+                    MapperStatus.SUCCESS,
+                    dict((str(k), v) for k, v in enumerate(self.resources)),
+                )
             else:
                 return MapperStatus.NO_MACHINE, {}
         else:
@@ -73,7 +78,6 @@ class SimpleMapper(Mapper):
     @property
     def domains(self):
         return self._domains
-
 
     @property
     def name(self):
@@ -84,7 +88,7 @@ class SimpleMapper(Mapper):
         from interstate_love_song.settings import load_dict_into_dataclass
 
         settings = load_dict_into_dataclass(SimpleMapperSettings, data)
-        return cls(settings.username, settings.password_hash, settings.resources, settings.domains)
+        return cls(settings.username, settings.password_hash, settings.resources, settings.domains,)
 
 
 if __name__ == "__main__":

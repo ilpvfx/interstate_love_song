@@ -82,9 +82,7 @@ def allocate_session(
     et = ElementTree(build_launch_session_xml())
     et.write(request_body, encoding="utf-8", xml_declaration=True)
 
-    def parse_xml_response(
-        response_xml: Element,
-    ) -> Tuple[AllocateSessionStatus, Optional[AgentSession]]:
+    def parse_xml_response(response_xml: Element,) -> Tuple[AllocateSessionStatus, Optional[AgentSession]]:
         result_id = response_xml.find("launch-session-resp/result-id")
         if result_id is None:
             return AllocateSessionStatus.XML_ERROR, None
@@ -100,9 +98,7 @@ def allocate_session(
                 if element is None:
                     return AllocateSessionStatus.XML_ERROR, None
 
-                session_properties[property.replace("-", "_")] = (
-                    element.text if property != "port" else int(element.text)
-                )
+                session_properties[property.replace("-", "_")] = element.text if property != "port" else int(element.text)
 
             return AllocateSessionStatus.SUCCESSFUL, AgentSession(**session_properties)
         elif result_id.text.lower() == "failed_user_auth":
@@ -134,9 +130,7 @@ def allocate_session(
         logger.info("Could not parse XML returned from Agent: {}".format(se))
         return AllocateSessionStatus.XML_ERROR, None
     except requests.exceptions.ConnectionError as ce:
-        logger.info(
-            "Could not establish a connection to the agent host {}: {}".format(agent_hostname, ce)
-        )
+        logger.info("Could not establish a connection to the agent host {}: {}".format(agent_hostname, ce))
         return AllocateSessionStatus.CONNECTION_ERROR, None
     except NewConnectionError as nce:
         logger.info("Could not establish a connection to the agent host {}.".format(agent_hostname))
