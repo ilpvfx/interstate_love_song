@@ -5,14 +5,16 @@ on:
     # To allow CI debugging we trigger on the CI branch
     branches:
     - CI
+    
+    # Publish `1.2.3` tags as releases.
+    tags:
+    - "[0-9]+.[0-9]+.[0-9]+"
 
   pull_request:
     branches:
     - master
   
-  # Publish `1.2.3` tags as releases.
-  tags:
-    - "[0-9]+.[0-9]+.[0-9]+"
+  
 
 jobs:
   test:
