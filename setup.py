@@ -30,7 +30,7 @@ setup(
     description="A customizeable broker for Teradici systems.",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
-    license='Apache-2.0 License',
+    license="Apache-2.0 License",
     author_email="eric.hermelin@ilpvfx.com, simon.otter@ilpvfx.com, fredrik.brannbacka@ilpvfx.com",
     python_requires=">3.6",
     entry_points={"console_scripts": ["interstate_love_song=interstate_love_song.__main__:main",],},
