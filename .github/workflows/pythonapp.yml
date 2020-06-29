@@ -27,11 +27,11 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-    - name: Check Format with Black
-      run: |
-        pip install black
-        # We will fail if we are not formatted with black
-        python -m black --check source --target-version py37 --line-length 127
+    #- name: Check Format with Black
+    #  run: |
+    #    pip install black
+    #    # We will fail if we are not formatted with black
+    #    python -m black --check source --target-version py37 --line-length 127
     - name: Lint with flake8
       run: |
         pip install flake8
