@@ -23,11 +23,7 @@ def gunicorn_runner(wsgi, host, port, cert, key, no_ssl=False, worker_class="gev
             return self.app
 
         def load_config(self):
-            config = {
-                key: value
-                for key, value in self.options.items()
-                if key in self.cfg.settings and value is not None
-            }
+            config = {key: value for key, value in self.options.items() if key in self.cfg.settings and value is not None}
             for key, value in config.items():
                 self.cfg.set(key.lower(), value)
 
@@ -99,22 +95,18 @@ def print_logo():
 def main():
     argparser = argparse.ArgumentParser("interstate_love_song")
     argparser.add_argument(
-        "-s", "--server", choices=["werkzeug", "gunicorn", "cherrypy"], default="gunicorn"
+        "-s", "--server", choices=["werkzeug", "gunicorn", "cherrypy"], default="gunicorn",
     )
     argparser.add_argument("--host", default="localhost")
     argparser.add_argument("-p", "--port", default=60443, type=int)
     argparser.add_argument(
-        "--fallback_sessions", action="store_true", help="Use fallback session management."
+        "--fallback_sessions", action="store_true", help="Use fallback session management.",
     )
     argparser.add_argument("--config", help="Config file.")
     argparser.add_argument("--cert", default="selfsign.crt")
     argparser.add_argument("--key", default="selfsign.key")
-    argparser.add_argument(
-        "--gunicorn-worker-class", default="gevent", help="only matters if -s gunicorn."
-    )
-    argparser.add_argument(
-        "--gunicorn-workers", default=2, type=int, help="only matters if -s gunicorn."
-    )
+    argparser.add_argument("--gunicorn-worker-class", default="gevent", help="only matters if -s gunicorn.")
+    argparser.add_argument("--gunicorn-workers", default=2, type=int, help="only matters if -s gunicorn.")
     argparser.add_argument("--no-splash", action="store_true")
     argparser.add_argument("--no-ssl", action="store_true")
 
@@ -153,9 +145,7 @@ def main():
     from .http import get_falcon_api, BrokerResource, standard_protocol_creator
 
     wsgi = get_falcon_api(
-        BrokerResource(standard_protocol_creator(settings.mapper)),
-        settings,
-        use_fallback_sessions=args.fallback_sessions,
+        BrokerResource(standard_protocol_creator(settings.mapper)), settings, use_fallback_sessions=args.fallback_sessions,
     )
 
     if args.server == "werkzeug":
