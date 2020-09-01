@@ -187,4 +187,5 @@ If you want to use the CherryPy's runner or Werkzeug, you'll need those packages
 
 We are using [black](https://github.com/psf/black) to format the code and we allow a line length of `127` columns.  
 The CI will run `python -m black --check source --target-version py37 --line-length 127` to fail if the code is not properly formatted.  
+To test locally you can install black with `pip install black==19.10b0`  
 It is highly recommended to configure your IDE to run formatting on save with these settings.
