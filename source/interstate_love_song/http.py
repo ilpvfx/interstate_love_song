@@ -145,26 +145,26 @@ class BrokerResource:
         <head>
             <title>Interstate Love Song</title>
             <style>
-                body {
+                body {{
                     font-family: sans-serif;
                     height: 100%;
                     background: lightgray;
                     color: gray;
-                }
-                .container {
+                }}
+                .container {{
                     height: 100%;
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                }
-                h1 {
+                }}
+                h1 {{
                     font-size: 2em;
-                }
-                h2 {
+                }}
+                h2 {{
                     position: relative;
                     top: 1.5em;
                     right: 1em;
-                }
+                }}
             </style>
         </head>
         <body>

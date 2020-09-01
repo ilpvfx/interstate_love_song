@@ -150,3 +150,12 @@ def test_broker_resource_serializes():
     assert resp.text == "<?xml version='1.0' encoding='utf-8'?>\n<bogus />"
 
     assert check.serialize_called is True
+
+
+def test_http_get():
+    api = get_falcon_api(BrokerResource(lambda: BrokerProtocolHandler(DummyMapper())))
+    client = TestClient(api)
+
+    resp = client.simulate_get("/pcoip-broker/xml")
+
+    assert resp.status == falcon.HTTP_OK
