@@ -121,7 +121,9 @@ def _serialize_get_resource_list_response(msg: GetResourceListResponse) -> Eleme
     return root
 
 
-def _serialize_allocate_resource_success_response(msg: AllocateResourceSuccessResponse,) -> Element:
+def _serialize_allocate_resource_success_response(
+    msg: AllocateResourceSuccessResponse,
+) -> Element:
     root = _get_common_root()
 
     resp = SubElement(root, "allocate-resource-resp")
@@ -146,7 +148,9 @@ def _serialize_allocate_resource_success_response(msg: AllocateResourceSuccessRe
     return root
 
 
-def _serialize_allocate_resource_failure_response(msg: AllocateResourceFailureResponse,) -> Element:
+def _serialize_allocate_resource_failure_response(
+    msg: AllocateResourceFailureResponse,
+) -> Element:
     root = _get_common_root()
 
     resp = SubElement(root, "allocate-resource-resp")

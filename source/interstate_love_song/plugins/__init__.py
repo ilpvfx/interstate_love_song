@@ -42,10 +42,13 @@ def get_available_plugins():
     plugins = {}
     for _, module in plugin_modules.items():
         members = inspect.getmembers(
-            module, lambda member: inspect.isclass(member) and member is not Mapper and issubclass(member, Mapper),
+            module,
+            lambda member: inspect.isclass(member) and member is not Mapper and issubclass(member, Mapper),
         )
         logger.info(
-            "Found plugins in module[%s]: %s", inspect.getmodulename(module.__file__), ", ".join(dict(members).keys()),
+            "Found plugins in module[%s]: %s",
+            inspect.getmodulename(module.__file__),
+            ", ".join(dict(members).keys()),
         )
         plugins.update(members)
     return plugins

@@ -41,8 +41,7 @@ class ProtocolState(Enum):
 
 @dataclass
 class ProtocolSession:
-    """Holds state data for the protocol. The Protocol handler is stateless itself.
-    """
+    """Holds state data for the protocol. The Protocol handler is stateless itself."""
 
     username: Optional[str] = None
     password: Optional[str] = None
@@ -111,9 +110,18 @@ class BrokerProtocolHandler:
 
         routing_table = {
             ProtocolState.WAITING_FOR_HELLO: (HelloRequest, self._hello),
-            ProtocolState.WAITING_FOR_AUTHENTICATE: (AuthenticateRequest, self._authenticate,),
-            ProtocolState.WAITING_FOR_GETRESOURCELIST: (GetResourceListRequest, self._get_resource_list,),
-            ProtocolState.WAITING_FOR_ALLOCATERESOURCE: (AllocateResourceRequest, self._allocate_resource,),
+            ProtocolState.WAITING_FOR_AUTHENTICATE: (
+                AuthenticateRequest,
+                self._authenticate,
+            ),
+            ProtocolState.WAITING_FOR_GETRESOURCELIST: (
+                GetResourceListRequest,
+                self._get_resource_list,
+            ),
+            ProtocolState.WAITING_FOR_ALLOCATERESOURCE: (
+                AllocateResourceRequest,
+                self._allocate_resource,
+            ),
         }
 
         state = ProtocolState.WAITING_FOR_HELLO if session is None else session.state
@@ -195,7 +203,11 @@ class BrokerProtocolHandler:
 
         hostname = session.resources[msg.resource_id].hostname
         status, agent_session = self._allocate_session(
-            msg.resource_id, hostname, session.username, session.password, session.domain,
+            msg.resource_id,
+            hostname,
+            session.username,
+            session.password,
+            session.domain,
         )
 
         if status == AllocateSessionStatus.SUCCESSFUL:

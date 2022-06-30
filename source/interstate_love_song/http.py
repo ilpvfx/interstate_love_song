@@ -95,7 +95,12 @@ class BrokerResource:
         :raise ValueError:
             A parameter was not callable.
         """
-        if not all(map(callable, [protocol_creator, serialize, deserialize, session_setter_creator],)):
+        if not all(
+            map(
+                callable,
+                [protocol_creator, serialize, deserialize, session_setter_creator],
+            )
+        ):
             raise ValueError("A parameter was not callable.")
         self._protocol_creator = protocol_creator
         self._serialize = serialize
@@ -231,7 +236,9 @@ class CookieCaseFixedResponse(falcon.Response):
 
 
 def get_falcon_api(
-    broker_resource: BrokerResource, settings: Settings = Settings(), use_fallback_sessions: bool = False,
+    broker_resource: BrokerResource,
+    settings: Settings = Settings(),
+    use_fallback_sessions: bool = False,
 ) -> API:
     logging.basicConfig(level=settings.logging.level.value)
 

@@ -146,11 +146,11 @@ class Settings:
 
 def load_settings_json(json_str: str) -> Settings:
     """Loads the settings from a JSON string. The JSON should be structured as follows:
-        {
-            "mapper": ?,
-            "beaker": {"type": ?, "data_dir": ?},
-            "logging": {"level": ?},
-        }
+    {
+        "mapper": ?,
+        "beaker": {"type": ?, "data_dir": ?},
+        "logging": {"level": ?},
+    }
     """
     data = json.loads(json_str)
     mapper = data.pop("mapper", None)

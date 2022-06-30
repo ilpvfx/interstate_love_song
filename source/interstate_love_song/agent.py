@@ -82,7 +82,9 @@ def allocate_session(
     et = ElementTree(build_launch_session_xml())
     et.write(request_body, encoding="utf-8", xml_declaration=True)
 
-    def parse_xml_response(response_xml: Element,) -> Tuple[AllocateSessionStatus, Optional[AgentSession]]:
+    def parse_xml_response(
+        response_xml: Element,
+    ) -> Tuple[AllocateSessionStatus, Optional[AgentSession]]:
         result_id = response_xml.find("launch-session-resp/result-id")
         if result_id is None:
             return AllocateSessionStatus.XML_ERROR, None

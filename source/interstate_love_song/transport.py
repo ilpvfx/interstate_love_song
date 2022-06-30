@@ -84,8 +84,7 @@ class TeradiciResource:
 
 @dataclass
 class GetResourceListResponse(Message):
-    """The brokers answer to a GetResourceListRequest. It's more or less just the list of available resources, if any.
-    """
+    """The brokers answer to a GetResourceListRequest. It's more or less just the list of available resources, if any."""
 
     resources: Sequence[TeradiciResource] = field(default_factory=lambda: [])
 
@@ -100,8 +99,7 @@ class AllocateResourceRequest(Message):
 
 @dataclass
 class AllocateResourceSuccessResponse(Message):
-    """After asking a resource for a session id, responds to the PCOIP-client with the session id and assorted data.
-    """
+    """After asking a resource for a session id, responds to the PCOIP-client with the session id and assorted data."""
 
     ip_address: str
     hostname: str

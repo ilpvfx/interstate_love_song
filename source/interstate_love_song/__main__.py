@@ -35,7 +35,10 @@ def gunicorn_runner(wsgi, host, port, cert, key, no_ssl=False, worker_class="gev
     }
     if not no_ssl:
         options.update(
-            {"certfile": cert, "keyfile": key,}
+            {
+                "certfile": cert,
+                "keyfile": key,
+            }
         )
 
     logger.info("Running gunicorn.")
@@ -95,12 +98,17 @@ def print_logo():
 def main():
     argparser = argparse.ArgumentParser("interstate_love_song")
     argparser.add_argument(
-        "-s", "--server", choices=["werkzeug", "gunicorn", "cherrypy"], default="gunicorn",
+        "-s",
+        "--server",
+        choices=["werkzeug", "gunicorn", "cherrypy"],
+        default="gunicorn",
     )
     argparser.add_argument("--host", default="localhost")
     argparser.add_argument("-p", "--port", default=60443, type=int)
     argparser.add_argument(
-        "--fallback_sessions", action="store_true", help="Use fallback session management.",
+        "--fallback_sessions",
+        action="store_true",
+        help="Use fallback session management.",
     )
     argparser.add_argument("--config", help="Config file.")
     argparser.add_argument("--cert", default="selfsign.crt")
@@ -145,7 +153,9 @@ def main():
     from .http import get_falcon_api, BrokerResource, standard_protocol_creator
 
     wsgi = get_falcon_api(
-        BrokerResource(standard_protocol_creator(settings.mapper)), settings, use_fallback_sessions=args.fallback_sessions,
+        BrokerResource(standard_protocol_creator(settings.mapper)),
+        settings,
+        use_fallback_sessions=args.fallback_sessions,
     )
 
     if args.server == "werkzeug":

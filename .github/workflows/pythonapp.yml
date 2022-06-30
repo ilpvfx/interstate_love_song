@@ -33,20 +33,16 @@ jobs:
         pip install -r requirements.txt
     - name: Check Format with Black
       run: |
-        pip install black==19.10b0
         # We will fail if we are not formatted with black
         python -m black --check --target-version py37 --line-length 127 source/
     - name: Lint with flake8
       run: |
-        pip install flake8
         # stop the build if there are Python syntax errors or undefined names
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Test with pytest
-      run: |
-        pip install pytest
-        pytest
+      run: pytest
       env:
         PYTHONPATH: source/
     - name: Build dists
