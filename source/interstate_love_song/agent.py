@@ -112,7 +112,7 @@ def allocate_session(
     try:
         response = requests.post(
             "https://{}:60443/pcoip-agent/xml".format(agent_hostname),
-            data=request_body.getvalue().decode("utf-8"),
+            data=request_body.getvalue(),
             verify=False,
             timeout=timeout,
         )
