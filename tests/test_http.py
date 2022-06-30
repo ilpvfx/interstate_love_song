@@ -5,7 +5,7 @@ from xml.etree.ElementTree import Element, tostring
 import falcon
 import pytest
 from falcon import API
-from falcon.testing import TestClient
+from falcon.testing import TestClient as FalconTestClient
 
 from interstate_love_song.protocol import BrokerProtocolHandler, ProtocolState, ProtocolSession
 from interstate_love_song.http import BrokerResource, get_falcon_api, SessionSetter
@@ -35,7 +35,7 @@ class DummySessionSetter(SessionSetter):
 
 def test_broker_resource_on_post_bad_xml():
     api = get_falcon_api(BrokerResource(lambda: BrokerProtocolHandler(DummyMapper())))
-    client = TestClient(api)
+    client = FalconTestClient(api)
 
     resp = client.simulate_post("/pcoip-broker/xml", body="Not XML")
 
@@ -56,7 +56,7 @@ def test_broker_resource_on_post_sets_session():
             protocol_creator=lambda: dummy_protocol, session_setter_creator=lambda x: session_setter
         )
     )
-    client = TestClient(api)
+    client = FalconTestClient(api)
 
     resp = client.simulate_post("/pcoip-broker/xml", body="<hello/>")
 
@@ -78,7 +78,7 @@ def test_broker_resource_on_post_clears_session():
             session_setter_creator=lambda x: session_setter,
         )
     )
-    client = TestClient(api)
+    client = FalconTestClient(api)
 
     resp = client.simulate_post("/pcoip-broker/xml", body="<hello/>")
 
@@ -107,7 +107,7 @@ def test_broker_resource_deserializes():
             session_setter_creator=lambda x: session_setter,
         )
     )
-    client = TestClient(api)
+    client = FalconTestClient(api)
 
     resp = client.simulate_post("/pcoip-broker/xml", body="<hello/>")
 
@@ -143,7 +143,7 @@ def test_broker_resource_serializes():
             session_setter_creator=lambda x: session_setter,
         )
     )
-    client = TestClient(api)
+    client = FalconTestClient(api)
 
     resp = client.simulate_post("/pcoip-broker/xml", body="<hello/>")
 
@@ -154,7 +154,7 @@ def test_broker_resource_serializes():
 
 def test_http_get():
     api = get_falcon_api(BrokerResource(lambda: BrokerProtocolHandler(DummyMapper())))
-    client = TestClient(api)
+    client = FalconTestClient(api)
 
     resp = client.simulate_get("/pcoip-broker/xml")
 
