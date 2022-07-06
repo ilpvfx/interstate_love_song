@@ -12,7 +12,7 @@ httpretty==1.1.4
 idna==3.3
 importlib-metadata==4.2.0
 iniconfig==1.1.1
-lxml==4.9.0
+lxml==4.9.1
 mccabe==0.6.1
 mypy-extensions==0.4.3
 packaging==21.3
