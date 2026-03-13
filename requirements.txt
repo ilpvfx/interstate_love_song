@@ -30,5 +30,5 @@ tomli==2.0.1
 typed-ast==1.5.4
 typing_extensions==4.2.0
 urllib3==1.26.9
-xmldiff==2.6
+xmldiff==2.7
 zipp==3.8.0
