@@ -181,9 +181,7 @@ class BrokerResource:
             </div>
         </body>
         </html>
-        """.format(
-            version=VERSION
-        )
+        """.format(version=VERSION)
 
         resp.content_type = falcon.MEDIA_HTML
 
