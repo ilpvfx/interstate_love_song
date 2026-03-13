@@ -88,9 +88,7 @@ def print_logo():
           /_____/\____/_____/ \___/      /____/ \____//_/ /_/_\__, /  v{}
                                                              /____/
           
-    """.format(
-        VERSION
-    )
+    """.format(VERSION)
     print(data)
     sys.stdout.flush()
 
